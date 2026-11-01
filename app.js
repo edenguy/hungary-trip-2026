@@ -3,15 +3,18 @@ const T = window.TRIP;
 const KEY = 'hu-trip-v1';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
-const waUrl = q => 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q);
+const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
+const HU_SITE = /(kodmoncsarda\.hu|programturizmus\.hu)/;
+const enUrl = u => HU_SITE.test(u) ? 'https://translate.google.com/translate?sl=hu&tl=en&u=' + encodeURIComponent(u) : u;
+const waUrl = q => 'https://www.google.com/search?tbm=isch&hl=en&q=' + encodeURIComponent(q);
 
 // ---------- state ----------
 let S;
 const blank = () => ({ status: {}, booking: {}, tasks: {}, customTasks: [], customRest: {}, notes: {}, expenses: [], packing: {}, flight: '', pick: {}, vote: {}, names: ['גיא','ענת'], tab: 'day', day: null });
 function load() { try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { S = blank(); } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { } scheduleSync(); }
 load();
+S.expenses.forEach((e, i) => { e.id ||= 'e0' + String(i).padStart(3, '0'); });
 if (S.names[0] === 'אני' && S.names[1] === 'בת הזוג') { S.names = ['גיא', 'ענת']; save(); }
 
 // ---------- dates ----------
@@ -62,12 +65,12 @@ function vetBar(x) {
 function linksHtml(x, name) {
   const nm = name || x.name || x.title || x.label || '';
   const L = [];
-  if (x.site) L.push(`<a class="btn" target="_blank" rel="noopener" href="${esc(x.site)}">🌐 אתר</a>`);
-  if (x.info) L.push(`<a class="btn" target="_blank" rel="noopener" href="${esc(x.info)}">ℹ️ מידע ואווירה</a>`);
+  if (x.site) L.push(`<a class="btn" target="_blank" rel="noopener" href="${esc(enUrl(x.site))}">🌐 אתר (EN)</a>`);
+  if (x.info) L.push(`<a class="btn" target="_blank" rel="noopener" href="${esc(enUrl(x.info))}">ℹ️ מידע ואווירה (EN)</a>`);
   if (x.reserve) L.push(`<a class="btn pri" target="_blank" rel="noopener" href="${esc(x.reserve)}">🗓️ הזמנה</a>`);
   if (x.phone) L.push(`<a class="btn" href="tel:${esc(x.phone)}">📞 ${esc(x.phone)}</a>`);
   if (x.email) L.push(`<a class="btn" href="mailto:${esc(x.email)}?subject=Table%20reservation">✉️ ${esc(x.email)}</a>`);
-  if (!x.site && !x.reserve) L.push(`<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(nm + ' reservation')}">🔎 חיפוש אתר והזמנה</a>`);
+  if (!x.site && !x.reserve) L.push(`<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?hl=en&q=${encodeURIComponent(nm + ' reservation')}">🔎 חיפוש אתר והזמנה</a>`);
   return `<div class="actions links">${L.join('')}</div>${x.bk ? `<div class="tiny muted">📌 ${esc(x.bk)}</div>` : ''}`;
 }
 const openTasks = () => [...T.tasks, ...S.customTasks].filter(t => !S.tasks[t.id]);
@@ -105,7 +108,8 @@ function countdown() {
   else if (t <= e) msg = `🎒 יום ${dayDiff(t, s) + 1} מתוך ${T.days.length}`;
   else msg = '🏡 הטיול הסתיים — מקווים שנהניתם!';
   const open = openBookings().length;
-  return `<div class="pills"><span class="pill">${msg}</span>${open ? `<span class="pill red">🟥 ${open} הזמנות פתוחות</span>` : '<span class="pill green">🟩 הכל הוזמן</span>'}</div>`;
+  const sp = SY.url ? `<span class="pill">${SY.err ? '⚠️ לא מסונכרן' : '🔄 מסונכרן'}</span>` : '';
+  return `<div class="pills"><span class="pill">${msg}</span>${sp}${open ? `<span class="pill red">🟥 ${open} הזמנות פתוחות</span>` : '<span class="pill green">🟩 הכל הוזמן</span>'}</div>`;
 }
 
 // ----- day view -----
@@ -170,7 +174,7 @@ function itemHtml(i, next) {
       ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
       ${galOk(i) ? `<div class="gal" data-gal></div><div class="tiny muted">תמונות מ-Wikipedia/Wikimedia לפי חיפוש — להמחשה בלבד · <a target="_blank" rel="noopener" href="${waUrl((i.maps || i.title) + ' Hungary')}">🔎 עוד בגוגל</a></div>` : ''}
       ${i.book ? linksHtml(i, i.bookLabel || i.title) : ''}
-      <div class="actions">${i.maps ? `<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(i.maps)}">🗺️ מפה</a><a class="btn" target="_blank" rel="noopener" href="${'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(i.maps)}">🧭 נווט</a>` : ''}${i.book ? statusBtn(i) : ''}</div>
+      <div class="actions">${i.maps ? `<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(i.maps)}">🗺️ מפה</a><a class="btn" target="_blank" rel="noopener" href="${'https://www.google.com/maps/dir/?api=1&hl=en&destination=' + encodeURIComponent(i.maps)}">🧭 נווט</a>` : ''}${i.book ? statusBtn(i) : ''}</div>
       ${vettable(i) ? vetBar(i) : ''}${vetoed(i) ? `<p class="warn">🚫 נפסל ע״י ${esc(vetoBy(i))} — אפשר לדלג או להחליף במשהו אחר.</p>` : ''}
       ${i.book && !vetoed(i) ? bookingForm(i) : ''}
     </div></details>`;
@@ -222,7 +226,7 @@ function viewTodo() {
 // ----- more view -----
 function viewMore() {
   const tot = S.expenses.reduce((a, e) => a + (+e.amt || 0), 0);
-  let h = `<h2>🧳 עוד</h2>`;
+  let h = `<h2>🧳 עוד</h2>` + syncCard();
   h += `<h3>🎒 רשימת אריזה</h3><div class="card">` + T.packing.map((p, i) => `<label class="task ${S.packing[i] ? 'done' : ''}"><input type="checkbox" data-act="pack" data-id="${i}" ${S.packing[i] ? 'checked' : ''}><span>${esc(p)}</span></label>`).join('') + `</div>`;
   h += `<h3>💶 הוצאות <small class="muted">(סה״כ ${tot.toLocaleString('he-IL')})</small></h3><div class="card">` +
     (S.expenses.map((e, i) => `<div class="exp"><span>${esc(e.what)}</span><b>${(+e.amt).toLocaleString('he-IL')} ${esc(e.cur || '')}</b><button class="x" data-act="delexp" data-id="${i}">✕</button></div>`).join('') || '<p class="muted">עוד אין הוצאות.</p>') +
@@ -308,6 +312,130 @@ async function fetchWeather(d) {
   } catch { set('⛅ תחזית לא זמינה'); }
 }
 
+
+// ---------- sync (last-writer-wins per field, via a shared JSON document) ----------
+const SHARED = ['status', 'booking', 'tasks', 'customTasks', 'customRest', 'notes', 'expenses', 'packing', 'pick', 'vote', 'names', 'flight'];
+const SYK = 'hu-trip-sync', SEP = '|', DEL = '__del__';
+let SY;
+try { SY = JSON.parse(localStorage.getItem(SYK) || 'null'); } catch { SY = null; }
+SY = Object.assign({ url: '', meta: {}, last: {}, ok: 0, err: '' }, SY || {});
+const saveSy = () => { try { localStorage.setItem(SYK, JSON.stringify(SY)); } catch { } };
+function flat(st) {
+  const out = {};
+  const walk = (v, p) => {
+    if (v === null || v === undefined) return;
+    if (Array.isArray(v)) { const objs = v.length && v.every(x => x && typeof x === 'object' && !Array.isArray(x)); v.forEach((x, i) => walk(x, [...p, objs ? '#' + (x.id ?? i) : '@' + i])); }
+    else if (typeof v === 'object') Object.entries(v).forEach(([k, x]) => walk(x, [...p, k]));
+    else out[p.join(SEP)] = v;
+  };
+  SHARED.forEach(k => walk(st[k], [k]));
+  return out;
+}
+function unflat(leaves) {
+  const root = {};
+  for (const [p, v] of Object.entries(leaves)) {
+    if (v === null || v === undefined) continue;
+    const seg = p.split(SEP); let n = root;
+    seg.forEach((s, i) => { if (i === seg.length - 1) n[s] = v; else n = (n[s] ||= {}); });
+  }
+  const conv = n => {
+    if (n === null || typeof n !== 'object') return n;
+    const ks = Object.keys(n); ks.forEach(k => { n[k] = conv(n[k]); });
+    if (ks.length && ks.every(k => k[0] === '#')) return ks.sort().map(k => { const o = n[k]; if (o && typeof o === 'object' && o.id === undefined) o.id = k.slice(1); return o; });
+    if (ks.length && ks.every(k => k[0] === '@')) return ks.sort((x, y) => x.slice(1) - y.slice(1)).map(k => n[k]);
+    return n;
+  };
+  return conv(root);
+}
+function track() { // stamp local changes since last time
+  const cur = flat(S), now = Date.now();
+  for (const p in cur) if (SY.last[p] !== cur[p]) SY.meta[p] = now;
+  for (const p in SY.last) if (!(p in cur)) SY.meta[p] = now;
+  SY.last = cur; return cur;
+}
+const doc = cur => ({ v: 1, leaves: Object.entries(SY.meta).map(([p, t]) => [p, p in cur ? cur[p] : DEL, t]) });
+let syncing = false, timer = null, pendingRender = false;
+function scheduleSync() { if (!SY.url || syncing) return; clearTimeout(timer); timer = setTimeout(syncNow, 1200); }
+async function syncNow() {
+  if (!SY.url || syncing) return;
+  syncing = true;
+  try {
+    const r = await fetch(SY.url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    let rem = [];
+    if (r.ok) { const j = await r.json().catch(() => null); if (j && Array.isArray(j.leaves)) rem = j.leaves; }
+    else if (r.status !== 404) throw new Error('http ' + r.status);
+    track();
+    const remote = new Map(rem.map(([p, v, t]) => [p, [v, t]]));
+    let applied = false, push = false;
+    for (const [p, [v, t]] of remote) {
+      if (!(p in SY.meta) || t > SY.meta[p]) { SY.meta[p] = t; applied = true; }
+    }
+    const merged = {};
+    for (const [p, t] of Object.entries(SY.meta)) {
+      const rv = remote.get(p);
+      if (rv && rv[1] >= t) merged[p] = rv[0]; else { const cur = flat(S); merged[p] = p in cur ? cur[p] : DEL; push = true; }
+    }
+    if (remote.size !== Object.keys(SY.meta).length) push = true;
+    if (applied) {
+      const leaves = {}; for (const [p, v] of Object.entries(merged)) leaves[p] = v === DEL ? null : v;
+      const m = unflat(leaves), b = blank();
+      SHARED.forEach(k => { S[k] = m[k] ?? b[k]; });
+      SY.last = flat(S);
+      try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { }
+    }
+    if (push) {
+      const cur = flat(S);
+      const pr = await fetch(SY.url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ v: 1, leaves: Object.entries(SY.meta).map(([p, t]) => [p, p in cur ? cur[p] : DEL, t]) }) });
+      if (!pr.ok) throw new Error('put ' + pr.status);
+    }
+    SY.ok = Date.now(); SY.err = ''; saveSy();
+    if (applied) softRender(); else drawTop();
+  } catch (e) { SY.err = String(e.message || e); saveSy(); drawTop(); }
+  syncing = false;
+}
+function softRender() {
+  const ae = document.activeElement;
+  if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) { pendingRender = true; return; }
+  pendingRender = false; keepOpen();
+}
+document.addEventListener('focusout', () => { if (pendingRender) setTimeout(softRender, 300); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncNow(); });
+addEventListener('online', syncNow);
+setInterval(() => { if (!document.hidden) syncNow(); }, 15000);
+async function enableSync() {
+  const cur = flat(S), now = Date.now();
+  for (const p in cur) SY.meta[p] = now;
+  SY.last = cur;
+  const body = JSON.stringify(doc(cur));
+  const r = await fetch('https://jsonblob.com/api/jsonBlob', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body });
+  let loc = r.headers.get('Location');
+  if (!loc && r.headers.get('X-jsonblob')) loc = 'https://jsonblob.com/api/jsonBlob/' + r.headers.get('X-jsonblob');
+  if (!r.ok || !loc) throw new Error('create failed');
+  SY.url = loc.replace(/^http:/, 'https:'); saveSy();
+  await syncNow();
+}
+function joinSync(url, fresh) {
+  SY.url = url; SY.err = '';
+  const cur = flat(S);
+  for (const p in cur) if (!(p in SY.meta)) SY.meta[p] = fresh ? Date.now() : 1;
+  SY.last = cur; saveSy(); syncNow();
+}
+const shareLink = () => location.origin + location.pathname + '?sync=' + encodeURIComponent(SY.url);
+function syncCard() {
+  if (!SY.url) return `<h3>🔄 סנכרון בין הטלפונים</h3><div class="card"><p>כרגע ההצבעות והסימונים נשמרים רק במכשיר הזה. הפעילו סנכרון, ושלחו את הקישור לבן/בת הזוג: כשפותחים אותו, שני המכשירים מתחברים לאותו מסמך משותף.</p><div class="actions"><button class="btn pri" data-act="sy-enable">🔄 הפעל סנכרון</button></div>
+    <details class="add"><summary>יש לי כתובת של מסמך JSON (למשל Firebase)</summary><form data-act="sy-url"><input name="url" type="url" placeholder="https://…" required><label class="tiny"><input type="checkbox" name="fresh" checked> זה המכשיר הראשון (הנתונים שלו נשארים)</label><button class="btn pri">חבר</button></form></details></div>`;
+  const ago = SY.ok ? Math.max(0, Math.round((Date.now() - SY.ok) / 1000)) + ' שנ׳' : '—';
+  return `<h3>🔄 סנכרון בין הטלפונים</h3><div class="card"><p>${SY.err ? '⚠️ אין חיבור כרגע (' + esc(SY.err) + '). הנתונים נשמרים במכשיר ויסונכרנו כשיחזור החיבור.' : '✅ מסונכרן · עודכן לפני ' + ago}</p>
+    <p class="tiny muted">כל שינוי נשלח תוך שניות, והמכשיר השני מתעדכן כל ~15 שניות. אם שני אנשים משנים את אותו שדה, הכתיבה האחרונה מנצחת.</p>
+    <div class="actions"><button class="btn pri" data-act="sy-share">📤 שלח קישור הצטרפות</button><button class="btn" data-act="sy-now">⟳ סנכרן עכשיו</button><button class="btn del" data-act="sy-off">נתק</button></div></div>`;
+}
+function drawTop() { const t = $('#top'); if (t) t.innerHTML = `<h1>🍷 ${esc(T.title)}</h1><div class="sub">${esc(T.subtitle)}</div>` + countdown(); }
+(function () { // join via ?sync=
+  const u = new URLSearchParams(location.search).get('sync');
+  if (u && /^https:\/\//.test(u) && u !== SY.url) { if (confirm('לחבר את המכשיר הזה לסנכרון הטיול?')) joinSync(u, false); history.replaceState(null, '', location.pathname); }
+  else if (u) history.replaceState(null, '', location.pathname);
+})();
+
 // ---------- events ----------
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t) return;
@@ -315,6 +443,10 @@ document.addEventListener('click', e => {
   if (a === 'tab') { S.tab = t.dataset.k; save(); render(); scrollTo(0, 0); }
   else if (a === 'day') { S.day = id; save(); render(); }
   else if (a === 'cycle') { const x = allBookables().find(b => b.id === id); if (x) { S.status[id] = NEXT[stOf(x)]; save(); keepOpen(); } }
+  else if (a === 'sy-enable') { t.disabled = true; t.textContent = 'מתחבר…'; enableSync().then(() => { render(); toast('סנכרון הופעל'); }).catch(() => { SY.url = ''; saveSy(); render(); alert('לא הצלחתי ליצור מסמך משותף. אפשר להשתמש בכתובת Firebase (ראו "יש לי כתובת").'); }); }
+  else if (a === 'sy-share') { const l = shareLink(); if (navigator.share) navigator.share({ title: 'טיול הונגריה', url: l }).catch(() => { }); else (navigator.clipboard?.writeText(l) || Promise.reject()).then(() => toast('הקישור הועתק')).catch(() => prompt('העתיקו:', l)); }
+  else if (a === 'sy-now') { syncNow().then(() => render()); }
+  else if (a === 'sy-off') { if (confirm('לנתק את הסנכרון? הנתונים נשארים במכשיר.')) { SY.url = ''; SY.meta = {}; SY.last = {}; saveSy(); render(); } }
   else if (a === 'pick') { const s = t.dataset.slot; S.pick[s] = S.pick[s] === id ? '' : id; save(); keepOpen(); }
   else if (a === 'gotoday') { S.day = id; S.tab = 'day'; save(); render(); scrollTo(0, 0); }
   else if (a === 'rphotos') { const g = document.querySelector(`[data-rgal="${CSS.escape(id)}"]`); if (g) { g.hidden = !g.hidden; if (!g.hidden && !g.dataset.l) { g.dataset.l = 1; fillGal(g, [], t.dataset.q, t.dataset.q + ' Hungary'); } } }
@@ -346,8 +478,9 @@ document.addEventListener('input', e => {
 document.addEventListener('submit', e => {
   const f = e.target, a = f.dataset?.act; if (!a) return; e.preventDefault();
   const v = Object.fromEntries(new FormData(f));
+  if (a === 'sy-url') { joinSync(v.url, !!v.fresh); render(); return; }
   if (a === 'addtask') S.customTasks.push({ id: 'c' + Date.now(), text: v.text, custom: true });
-  if (a === 'addexp') S.expenses.push({ what: v.what, amt: v.amt, cur: v.cur });
+  if (a === 'addexp') S.expenses.push({ id: 'e' + Date.now(), what: v.what, amt: v.amt, cur: v.cur });
   if (a === 'addrest') (S.customRest[f.dataset.day] ||= []).push({ id: 'cr' + Date.now(), name: v.name, kind: v.kind, desc: v.desc, maps: v.name + ' ' + 'Hungary', book: !!v.book, status: 'need', custom: true });
   save(); render();
 });
