@@ -1,6 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
+const BUILD = '20261101175710';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -720,6 +721,22 @@ document.addEventListener('submit', e => {
   save(); render();
 });
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); }
+
+// ---------- auto-update check: if a newer build was published, reload to it ----------
+async function checkUpdate(first) {
+  try {
+    const r = await fetch('version.json?_=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+    const v = (await r.json()).v; if (!v || v === BUILD) { try { sessionStorage.removeItem('reloaded'); } catch { } return; }
+    let tried = false; try { tried = sessionStorage.getItem('reloaded') === v; } catch { }
+    if (tried) return;
+    const go = async () => { try { sessionStorage.setItem('reloaded', v); const rs = await navigator.serviceWorker?.getRegistrations(); rs && await Promise.all(rs.map(x => x.unregister())); const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch { } location.reload(); };
+    if (first) return go();
+    const t = $('#toast'); t.innerHTML = 'יש גרסה חדשה של האתר — <button class="btn pri" id="upd" style="height:28px;margin-inline-start:8px">עדכן עכשיו</button>'; t.classList.add('on'); t.style.pointerEvents = 'auto'; $('#upd').onclick = go;
+  } catch { }
+}
+setInterval(() => { if (!document.hidden) checkUpdate(false); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(false); });
+checkUpdate(true);
 
 render();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
