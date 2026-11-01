@@ -102,7 +102,7 @@ function render() {
   const v = { day: viewDay, map: viewMap, food: viewFood, todo: viewTodo, more: viewMore }[S.tab];
   $('#app').innerHTML = v(d);
   if (S.tab === 'day') { wireGallery(); }
-  if (S.tab === 'map') initMap(d); else destroyMap();
+  if (S.tab === 'map') { initMap(d); markSaved(d); } else destroyMap();
 }
 function countdown() {
   const t = today(), s = D(T.start), e = D(T.end);
@@ -309,14 +309,17 @@ const minTxt = s => { const m = Math.round(s / 60); return m >= 60 ? Math.floor(
 const dirLink = (p, mode) => `https://www.google.com/maps/dir/?api=1&hl=en&travelmode=${mode}&destination=${p.ll[0]},${p.ll[1]}`;
 function destroyMap() { if (MAP) { try { MAP.remove(); } catch { } MAP = null; } }
 async function osrm(profile, pts, steps) {
-  const key = profile + pts.map(p => p.join(',')).join(';') + steps;
+  const key = profile + pts.map(p => p.join(',')).join(';') + steps, lk = 'rt:' + key;
   if (rcache[key]) return rcache[key];
+  try { const c = localStorage.getItem(lk); if (c) return (rcache[key] = JSON.parse(c)); } catch { }
   const c = pts.map(p => p[1] + ',' + p[0]).join(';');
   const base = profile === 'foot' ? 'https://routing.openstreetmap.de/routed-foot/route/v1/foot/' : 'https://router.project-osrm.org/route/v1/driving/';
   try {
     const r = await fetch(`${base}${c}?overview=full&geometries=geojson&steps=${steps ? 'true' : 'false'}`);
     const j = await r.json(); const rt = j.routes?.[0]; if (!rt) throw 0;
-    return (rcache[key] = rt);
+    const slim = { distance: rt.distance, duration: rt.duration, geometry: { type: 'LineString', coordinates: rt.geometry.coordinates.map(c => [+c[0].toFixed(5), +c[1].toFixed(5)]) }, legs: (rt.legs || []).map(l => ({ steps: (l.steps || []).map(s => ({ distance: Math.round(s.distance), name: s.name, maneuver: { type: s.maneuver?.type, modifier: s.maneuver?.modifier, exit: s.maneuver?.exit } })) })) };
+    try { localStorage.setItem(lk, JSON.stringify(slim)); } catch { }
+    return (rcache[key] = slim);
   } catch { return null; }
 }
 const MOD = { left: 'שמאלה', right: 'ימינה', 'slight left': 'מעט שמאלה', 'slight right': 'מעט ימינה', 'sharp left': 'חד שמאלה', 'sharp right': 'חד ימינה', straight: 'ישר', uturn: 'פניית פרסה' };
@@ -340,6 +343,7 @@ function viewMap(d) {
   h += `<h2>${d.emoji} ${esc(d.title)}</h2>`;
   if (M.route && M.walk) h += `<div class="seg"><button class="${mode === 'drive' ? 'on' : ''}" data-act="mapmode" data-m="drive">🚗 נסיעה והוראות</button><button class="${mode === 'walk' ? 'on' : ''}" data-act="mapmode" data-m="walk">🚶 סיור הליכה</button></div>`;
   h += `<div id="map"></div><div class="actions"><button class="btn" data-act="locate">📍 איפה אני</button><span class="tiny muted">המפה: OpenStreetMap. הנקודות משוערות — לניווט מדויק השתמשו בכפתורי "נווט".</span></div><div id="mapPanel"></div>`;
+  if (M.route || M.walk) h += `<h3>🖼️ מפה כתמונה (לשימוש אופליין)</h3><p class="tiny muted">תמונת PNG עם כל הנקודות A·B·C והמסלול, שנשמרת במכשיר ונפתחת גם בלי קליטה. יוצרים אותה פעם אחת כשיש רשת.</p><div class="actions">${modesOf(d).map(m => `<button class="btn" data-act="mapimg" data-day="${d.id}" data-m="${m}">🖼️ ${m === 'walk' ? 'סיור הליכה' : 'מסלול נסיעה'}</button>`).join('')}<button class="btn pri" data-act="mapall">📥 שמור את כל המפות לאופליין</button></div>`;
   if (!M.route && !M.walk) h += '<p class="muted">אין מפה ליום הזה.</p>';
   return h;
 }
@@ -401,6 +405,62 @@ function locate() {
   if (!MAP || !navigator.geolocation) return toast('אין גישה למיקום');
   navigator.geolocation.getCurrentPosition(p => { const ll = [p.coords.latitude, p.coords.longitude]; if (me) me.remove(); me = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(MAP); MAP.setView(ll, Math.max(MAP.getZoom(), 15)); }, () => toast('לא הצלחתי לקבל מיקום'), { enableHighAccuracy: true, timeout: 8000 });
 }
+
+
+// ---------- offline map image (PNG) ----------
+const idb = () => new Promise((res, rej) => { const q = indexedDB.open('hu-trip', 1); q.onupgradeneeded = () => q.result.createObjectStore('maps'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+const idbGet = async k => { const db = await idb(); return new Promise(r => { const q = db.transaction('maps').objectStore('maps').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); };
+const idbPut = async (k, v) => { const db = await idb(); return new Promise((r, j) => { const tx = db.transaction('maps', 'readwrite'); tx.objectStore('maps').put(v, k); tx.oncomplete = r; tx.onerror = () => j(tx.error); }); };
+const TS = 256, mx = (lon, z) => (lon + 180) / 360 * 2 ** z * TS, my = (lat, z) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * 2 ** z * TS; };
+const modesOf = d => { const M = (window.TRIP_MAP || {})[d.id] || {}; return [M.route && 'drive', M.walk && 'walk'].filter(Boolean); };
+async function mapSpec(d, mode) {
+  const M = TRIP_MAP[d.id];
+  const pts = mode === 'walk' ? M.walk.stops.map((s, i) => ({ ll: s.ll, label: String(i + 1), name: s.n })) : M.route.map((p, i) => ({ ll: p.ll, label: String.fromCharCode(65 + i), name: p.n }));
+  const lines = [];
+  for (let i = 0; i < pts.length - 1; i++) { const rt = await osrm(mode === 'walk' ? 'foot' : 'driving', [pts[i].ll, pts[i + 1].ll], mode !== 'walk'); lines.push(rt ? rt.geometry.coordinates.map(c => [c[1], c[0]]) : [pts[i].ll, pts[i + 1].ll]); }
+  return { pts, lines };
+}
+const loadTile = (z, x, y) => new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; const t = setTimeout(() => res(null), 9000); im.onload = () => { clearTimeout(t); res(im); }; im.onerror = () => { clearTimeout(t); res(null); }; im.src = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`; });
+async function renderPng(d, mode) {
+  const { pts, lines } = await mapSpec(d, mode), W = 1080, H = 1080, rowH = 54, LH = 120 + pts.length * rowH;
+  const all = [...pts.map(p => p.ll), ...lines.flat()];
+  const la = all.map(p => p[0]), lo = all.map(p => p[1]), minLa = Math.min(...la), maxLa = Math.max(...la), minLo = Math.min(...lo), maxLo = Math.max(...lo);
+  let z = 17; for (; z > 3; z--) if (mx(maxLo, z) - mx(minLo, z) <= W - 240 && my(minLa, z) - my(maxLa, z) <= H - 240) break;
+  const ox = (mx(minLo, z) + mx(maxLo, z)) / 2 - W / 2, oy = (my(minLa, z) + my(maxLa, z)) / 2 - H / 2;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H + LH; const c = cv.getContext('2d');
+  c.fillStyle = '#e8e4dc'; c.fillRect(0, 0, W, H + LH);
+  const jobs = []; const n = 2 ** z;
+  for (let x = Math.floor(ox / TS); x <= Math.floor((ox + W) / TS); x++) for (let y = Math.floor(oy / TS); y <= Math.floor((oy + H) / TS); y++) if (y >= 0 && y < n) jobs.push(loadTile(z, ((x % n) + n) % n, y).then(im => ({ im, x, y })));
+  const tiles = await Promise.all(jobs); let ok = 0;
+  c.save(); c.beginPath(); c.rect(0, 0, W, H); c.clip(); tiles.forEach(t => { if (t.im) { c.drawImage(t.im, t.x * TS - ox, t.y * TS - oy); ok++; } }); c.restore();
+  const px = p => [mx(p[1], z) - ox, my(p[0], z) - oy], cols = ['#7a1f2b', '#2e6f95', '#c27c0e', '#2e8b57'];
+  c.lineJoin = c.lineCap = 'round';
+  lines.forEach((ln, i) => { c.beginPath(); ln.forEach((p, k) => { const [x, y] = px(p); k ? c.lineTo(x, y) : c.moveTo(x, y); }); c.strokeStyle = '#fff'; c.lineWidth = 14; c.stroke(); c.strokeStyle = cols[i % 4]; c.lineWidth = 8; c.stroke(); });
+  c.font = 'bold 30px system-ui, Arial'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  pts.forEach(p => { const [x, y] = px(p.ll); c.beginPath(); c.arc(x, y, 27, 0, 7); c.fillStyle = '#7a1f2b'; c.fill(); c.lineWidth = 5; c.strokeStyle = '#fff'; c.stroke(); c.fillStyle = '#fff'; c.fillText(p.label, x, y + 1); });
+  c.fillStyle = 'rgba(255,255,255,.88)'; c.fillRect(0, 0, W, 64); c.fillStyle = '#2b2422'; c.font = 'bold 30px system-ui, Arial'; c.textAlign = 'right'; c.direction = 'rtl';
+  c.fillText(`${d.dow} ${fmt(d.date)} · ${mode === 'walk' ? TRIP_MAP[d.id].walk.title : 'מסלול נסיעה'}`, W - 24, 33);
+  c.font = '18px system-ui, Arial'; c.fillStyle = '#555'; c.textAlign = 'left'; c.direction = 'ltr'; c.fillText(ok ? '© OpenStreetMap contributors' : 'ללא רקע מפה (אין חיבור) · OpenStreetMap', 14, H - 14);
+  c.fillStyle = '#fff'; c.fillRect(0, H, W, LH); c.fillStyle = '#7a1f2b'; c.fillRect(0, H, W, 6);
+  c.textBaseline = 'middle'; c.font = '26px system-ui, Arial'; c.textAlign = 'right'; c.direction = 'rtl';
+  pts.forEach((p, i) => { const y = H + 50 + i * rowH; c.beginPath(); c.arc(W - 44, y, 19, 0, 7); c.fillStyle = '#7a1f2b'; c.fill(); c.fillStyle = '#fff'; c.font = 'bold 22px system-ui, Arial'; c.textAlign = 'center'; c.fillText(p.label, W - 44, y + 1); c.fillStyle = '#2b2422'; c.font = '26px system-ui, Arial'; c.textAlign = 'right'; c.fillText(p.name, W - 80, y + 1); });
+  c.font = '18px system-ui, Arial'; c.fillStyle = '#777'; c.textAlign = 'center'; c.direction = 'ltr'; c.fillText('נשמר ' + new Date().toLocaleString('he-IL'), W / 2, H + LH - 22);
+  return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/png'));
+}
+async function makeImg(d, mode) { const rec = { blob: await renderPng(d, mode), ts: Date.now() }; await idbPut(d.id + '-' + mode, rec); return rec; }
+function openViewer(html) { let v = $('#viewer'); if (!v) { v = document.createElement('div'); v.id = 'viewer'; document.body.appendChild(v); } v.innerHTML = html; v.hidden = false; }
+async function showMapImg(d, mode, force) {
+  const key = d.id + '-' + mode; let rec = force ? null : await idbGet(key).catch(() => null);
+  if (!rec) { openViewer('<div class="vbar"><b>יוצר תמונת מפה…</b><button class="btn" data-act="vclose">✕</button></div><p class="pad" style="color:#fff">טוען אריחי מפה (דורש חיבור לרשת)…</p>'); try { rec = await makeImg(d, mode); } catch (e) { openViewer('<div class="vbar"><b>שגיאה</b><button class="btn" data-act="vclose">✕</button></div><p class="pad" style="color:#fff">לא הצלחתי ליצור תמונה (אין חיבור?). נסו שוב כשיש רשת.</p>'); return; } }
+  const url = URL.createObjectURL(rec.blob), fn = `hungary-${d.id}-${mode}.png`;
+  openViewer(`<div class="vbar"><b>${esc(d.dow)} ${fmt(d.date)} · ${mode === 'walk' ? 'סיור הליכה' : 'נסיעה'}</b><span><a class="btn" download="${fn}" href="${url}">⬇️ שמור</a><button class="btn" data-act="vshare" data-day="${d.id}" data-m="${mode}">📤</button><button class="btn" data-act="vrefresh" data-day="${d.id}" data-m="${mode}">🔄</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${url}" alt="map"></div><p class="tiny" style="color:#ddd;text-align:center">שמורה במכשיר — נפתחת גם בלי קליטה. נשמרה ${new Date(rec.ts).toLocaleString('he-IL')}</p>`);
+}
+async function saveAllMaps(btn) {
+  const jobs = T.days.flatMap(d => modesOf(d).map(m => [d, m])); let i = 0, fail = 0;
+  for (const [d, m] of jobs) { btn.textContent = `שומר… ${++i}/${jobs.length}`; try { await makeImg(d, m); } catch { fail++; } }
+  btn.textContent = fail ? `נשמרו ${jobs.length - fail}/${jobs.length} (נכשלו ${fail})` : `✅ נשמרו כל ${jobs.length} המפות`;
+}
+async function markSaved(d) { for (const m of modesOf(d)) { const r = await idbGet(d.id + '-' + m).catch(() => null); const b = document.querySelector(`[data-act=mapimg][data-m=${m}]`); if (b && r) b.textContent = b.textContent.replace('🖼️', '✅🖼️'); } }
 
 // ---------- weather ----------
 const wxc = {};
@@ -554,6 +614,11 @@ document.addEventListener('click', e => {
   else if (a === 'sy-share') { const l = shareLink(); if (navigator.share) navigator.share({ title: 'טיול הונגריה', url: l }).catch(() => { }); else (navigator.clipboard?.writeText(l) || Promise.reject()).then(() => toast('הקישור הועתק')).catch(() => prompt('העתיקו:', l)); }
   else if (a === 'sy-now') { syncNow().then(() => render()); }
   else if (a === 'sy-off') { if (confirm('לנתק את הסנכרון? הנתונים נשארים במכשיר.')) { SY.url = ''; SY.meta = {}; SY.last = {}; saveSy(); render(); } }
+  else if (a === 'mapimg') { showMapImg(T.days.find(x => x.id === t.dataset.day), t.dataset.m); }
+  else if (a === 'mapall') { t.disabled = true; saveAllMaps(t).then(() => { t.disabled = false; render(); }); }
+  else if (a === 'vclose') { const v = $('#viewer'); if (v) v.hidden = true; if (S.tab === 'map') markSaved(focusDay()); }
+  else if (a === 'vrefresh') { showMapImg(T.days.find(x => x.id === t.dataset.day), t.dataset.m, true); }
+  else if (a === 'vshare') { const dd = T.days.find(x => x.id === t.dataset.day); idbGet(dd.id + '-' + t.dataset.m).then(r => { const f = new File([r.blob], `hungary-${dd.id}.png`, { type: 'image/png' }); if (navigator.canShare?.({ files: [f] })) navigator.share({ files: [f] }).catch(() => { }); else toast('השיתוף לא נתמך — השתמשו ב"שמור"'); }); }
   else if (a === 'mapmode') { S.mapMode = t.dataset.m; save(); render(); }
   else if (a === 'locate') { locate(); }
   else if (a === 'visit') { const dd = t.dataset.day, m = (S.walk[dd] ||= {}); m[id] = t.type === 'checkbox' ? t.checked : !m[id]; save(); render(); }
