@@ -498,21 +498,28 @@ new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nod
 
 // ---------- hero photo (Wikipedia lead image, with gradient fallback) ----------
 async function heroImg(title) {
-  const ck = 'hero:' + title;
+  const ck = 'hero2:' + title;
   try { const c = localStorage.getItem(ck); if (c) return c; } catch { }
   try {
     const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title));
     if (!r.ok) return '';
-    const j = await r.json(); let u = j.thumbnail?.source || j.originalimage?.source || '';
-    if (u) u = u.replace(/\/(\d+)px-/, '/1000px-');
+    const j = await r.json(), o = j.originalimage, t = j.thumbnail;
+    let u = '';
+    if (o && o.width && o.width <= 1400) u = o.source;           // small enough to use as is
+    else if (t && /\/\d+px-/.test(t.source)) u = t.source.replace(/\/\d+px-/, '/960px-'); // standard Wikimedia thumb size
+    else u = (o && o.source) || (t && t.source) || '';
     if (u) { try { localStorage.setItem(ck, u); } catch { } }
     return u;
   } catch { return ''; }
 }
+const tryImg = u => new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u; });
 async function loadHero() {
   const el = document.querySelector('.hero[data-hero]'); if (!el || !el.dataset.hero) return;
-  const u = await heroImg(el.dataset.hero);
-  if (u && document.body.contains(el)) { const im = new Image(); im.onload = () => { el.style.backgroundImage = `url("${u}")`; }; im.src = u; }
+  for (const title of el.dataset.hero.split('|')) {
+    const u = await heroImg(title);
+    if (u && await tryImg(u)) { if (document.body.contains(el)) el.style.backgroundImage = `url("${u}")`; return; }
+    try { localStorage.removeItem('hero2:' + title); } catch { }
+  }
 }
 
 // ---------- weather ----------
