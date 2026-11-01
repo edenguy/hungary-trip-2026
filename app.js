@@ -96,12 +96,12 @@ function bookingForm(x) {
 function render() {
   const d = focusDay();
   const open = openBookings().length, ot = openTasks().length;
-  $('#top').innerHTML = `<h1>🍷 ${esc(T.title)}</h1><div class="sub">${esc(T.subtitle)}</div>` + countdown();
-  const tabs = [['day', '📅', 'יום'], ['map', '🗺️', 'מפה'], ['food', '🍽️', 'אוכל'], ['todo', '✅', `משימות${open + ot ? ' ' + (open + ot) : ''}`], ['more', '🧳', 'עוד']];
-  $('#nav').innerHTML = tabs.map(([k, i, l]) => `<button class="${S.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}"><span>${i}</span>${l}</button>`).join('');
+  $('#top').innerHTML = `<span class="brand">${esc(T.title)}</span>` + countdown();
+  const tabs = [['day', 'calendar-days', 'יום'], ['map', 'map', 'מפה'], ['food', 'utensils', 'אוכל'], ['todo', 'list-checks', `משימות${open + ot ? ' ' + (open + ot) : ''}`], ['more', 'ellipsis', 'עוד']];
+  $('#nav').innerHTML = tabs.map(([k, i, l]) => `<button class="${S.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}"><svg class="i"><use href="#i-${i}"/></svg>${l}</button>`).join('');
   const v = { day: viewDay, map: viewMap, food: viewFood, todo: viewTodo, more: viewMore }[S.tab];
   $('#app').innerHTML = v(d);
-  if (S.tab === 'day') { wireGallery(); }
+  if (S.tab === 'day') { wireGallery(); loadHero(); }
   if (S.tab === 'map') { initMap(d); markSaved(d); } else destroyMap();
 }
 function countdown() {
@@ -144,12 +144,13 @@ function viewDay(d) {
   const next = nowNext(d);
   const opens = allBookables().filter(b => b.day === d.id && stOf(b) === 'need' && !vetoed(b)).length;
   let html = dayChips(d);
-  html += `<section class="hero"><div class="hero-top"><span class="big">${d.emoji}</span><div><div class="muted">${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h2>${esc(d.title)}</h2></div></div>
-    <p>${esc(d.summary)}</p>
-    ${d.note ? `<p class="warn">💡 ${esc(d.note)}</p>` : ''}
-    ${d.lore ? `<details class="lore-d"><summary>📖 ${esc(d.lore.t)} — היסטוריה, פיקנטריה ועובדות</summary>${loreHtml(d)}</details>` : ''}
+  const idx = T.days.findIndex(x => x.id === d.id) + 1;
+  html += `<section class="hero" data-hero="${esc(d.hero || '')}"><div class="hero-inner"><div class="eyebrow">יום ${idx} מתוך ${T.days.length} · ${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h1 class="hero-title">${esc(d.title)}</h1>
+    <div class="hero-pills"><span class="gp">🌇 שקיעה ${d.sunset}</span><span class="gp" id="wx-${d.id}">⛅ …</span>${opens ? `<span class="gp need">🟥 ${opens} לסגור</span>` : '<span class="gp done">🟩 הכל סגור</span>'}</div></div></section>
+    <p class="lead">${esc(d.summary)}</p>
+    ${d.note ? `<div class="warn">💡<span>${esc(d.note)}</span></div>` : ''}
     <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
-    <div class="facts"><span>🌇 שקיעה ${d.sunset}</span><span id="wx-${d.id}">⛅ …</span>${opens ? `<span class="red">🟥 ${opens} לסגור</span>` : '<span class="green">🟩 הכל סגור</span>'}</div></section>`;
+    ${d.lore ? `<details class="lore-d"><summary>📖 ${esc(d.lore.t)} — היסטוריה, פיקנטריה ועובדות</summary>${loreHtml(d)}</details>` : ''}`;
   if (d.flight) html += flightBox();
   html += `<h3>לוח זמנים</h3><div class="tl">` + d.items.map(i => itemHtml(i, next)).join('') + `</div>`;
   if (d.restaurants.length || (S.customRest[d.id] || []).length) html += `<h3>🍽️ אוכל היום — שתי אפשרויות לכל ארוחה</h3>` + restSection(d);
@@ -472,6 +473,48 @@ async function saveAllMaps(btn) {
 }
 async function markSaved(d) { for (const m of modesOf(d)) { const r = await idbGet(d.id + '-' + m).catch(() => null); const b = document.querySelector(`[data-act=mapimg][data-m=${m}]`); if (b && r) b.textContent = b.textContent.replace('🖼️', '✅🖼️'); } }
 
+
+// ---------- icons: replace emoji with line icons (DOM-level, attribute-safe) ----------
+const EMO = { '✈': 'plane', '🛫': 'plane-takeoff', '🛬': 'plane-landing', '🚗': 'car', '📍': 'map-pin', '🍽': 'utensils', '🍴': 'utensils', '🏰': 'castle', '🏨': 'hotel', '♨': 'droplets', '🥐': 'croissant', '🌊': 'waves', '🕳': 'mountain', '🏘': 'house', '🏠': 'house', '🏡': 'house', '🚶': 'footprints', '⛽': 'fuel', '🧳': 'luggage', '🛂': 'id-card', '⛪': 'church', '✨': 'sparkles', '🎄': 'tree-pine', '🍷': 'wine', '🌅': 'sunset', '🌇': 'sunset', '🌲': 'trees', '🧖': 'bath', '☕': 'coffee', '🏛': 'landmark', '🗺': 'map', '🧭': 'navigation', '📷': 'camera', '🔎': 'search', '📞': 'phone', '✉': 'mail', '🌐': 'globe', 'ℹ': 'info', '🗓': 'calendar-days', '📅': 'calendar', '🕒': 'clock', '⏰': 'clock', '📜': 'scroll-text', '🌶': 'flame', '⚡': 'zap', '⚠': 'triangle-alert', '👍': 'thumbs-up', '🚫': 'ban', '✅': 'circle-check', '✔': 'check', '🔄': 'refresh-cw', '⟳': 'refresh-cw', '⬇': 'download', '📥': 'download', '📤': 'share-2', '🖼': 'image', '📝': 'pencil', '✏': 'pencil', '💡': 'lightbulb', '🎒': 'backpack', '⏳': 'hourglass', '🎉': 'party-popper', '⛅': 'cloud-sun', '☀': 'sun', '🌫': 'cloud-fog', '🌧': 'cloud-rain', '❄': 'snowflake', '🌦': 'cloud-sun-rain', '🍇': 'grape', '🥩': 'beef', '🔗': 'external-link', '💶': 'banknote', '🗣': 'languages', '📌': 'pin', '📋': 'clipboard-list', '💾': 'save', '🗳': 'check', '📖': 'scroll-text', '🔖': 'pin' };
+const EMO_RE = /[\p{Extended_Pictographic}⟳]️?/gu, EMO_TEST = /[\p{Extended_Pictographic}⟳]/u, SVGNS = 'http://www.w3.org/2000/svg';
+function emoNode(ch) {
+  const c = ch.replace(/️/g, '');
+  if (c === '🟥' || c === '🟩' || c === '⬜') { const s = document.createElement('i'); s.className = 'sq ' + (c === '🟥' ? 'sq-r' : c === '🟩' ? 'sq-g' : 'sq-n'); return s; }
+  const n = EMO[c]; if (!n) return document.createTextNode('');
+  const s = document.createElementNS(SVGNS, 'svg'); s.setAttribute('class', 'i'); const u = document.createElementNS(SVGNS, 'use'); u.setAttribute('href', '#i-' + n); s.appendChild(u); return s;
+}
+function iconify(root) {
+  const skip = /^(TEXTAREA|SCRIPT|STYLE|TITLE|OPTION|svg)$/, nodes = [];
+  if (root.nodeType === 3) { if (EMO_TEST.test(root.nodeValue) && root.parentNode && !skip.test(root.parentNode.nodeName)) nodes.push(root); }
+  else { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (EMO_TEST.test(n.nodeValue) && !skip.test(n.parentNode.nodeName)) nodes.push(n); }
+  nodes.forEach(n => {
+    const t = n.nodeValue, f = document.createDocumentFragment(); let last = 0, m; EMO_RE.lastIndex = 0;
+    while ((m = EMO_RE.exec(t))) { if (m.index > last) f.appendChild(document.createTextNode(t.slice(last, m.index))); f.appendChild(emoNode(m[0])); last = m.index + m[0].length; }
+    if (last < t.length) f.appendChild(document.createTextNode(t.slice(last)));
+    n.parentNode && n.parentNode.replaceChild(f, n);
+  });
+}
+new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1 || n.nodeType === 3) iconify(n); }))).observe(document.body, { childList: true, subtree: true });
+
+// ---------- hero photo (Wikipedia lead image, with gradient fallback) ----------
+async function heroImg(title) {
+  const ck = 'hero:' + title;
+  try { const c = localStorage.getItem(ck); if (c) return c; } catch { }
+  try {
+    const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title));
+    if (!r.ok) return '';
+    const j = await r.json(); let u = j.thumbnail?.source || j.originalimage?.source || '';
+    if (u) u = u.replace(/\/(\d+)px-/, '/1000px-');
+    if (u) { try { localStorage.setItem(ck, u); } catch { } }
+    return u;
+  } catch { return ''; }
+}
+async function loadHero() {
+  const el = document.querySelector('.hero[data-hero]'); if (!el || !el.dataset.hero) return;
+  const u = await heroImg(el.dataset.hero);
+  if (u && document.body.contains(el)) { const im = new Image(); im.onload = () => { el.style.backgroundImage = `url("${u}")`; }; im.src = u; }
+}
+
 // ---------- weather ----------
 const wxc = {};
 async function fetchWeather(d) {
@@ -606,7 +649,7 @@ function syncCard() {
     <p class="tiny muted">כל שינוי נשלח תוך שניות, והמכשיר השני מתעדכן כל ~15 שניות. אם שני אנשים משנים את אותו שדה, הכתיבה האחרונה מנצחת.</p>
     <div class="actions"><button class="btn pri" data-act="sy-share">📤 שלח קישור הצטרפות</button><button class="btn" data-act="sy-now">⟳ סנכרן עכשיו</button><button class="btn del" data-act="sy-off">נתק</button></div></div>`;
 }
-function drawTop() { const t = $('#top'); if (t) t.innerHTML = `<h1>🍷 ${esc(T.title)}</h1><div class="sub">${esc(T.subtitle)}</div>` + countdown(); }
+function drawTop() { const t = $('#top'); if (t) t.innerHTML = `<span class="brand">${esc(T.title)}</span>` + countdown(); }
 (function () { // join via ?sync=
   const u = new URLSearchParams(location.search).get('sync');
   if (u && /^https:\/\//.test(u) && u !== SY.url) { if (confirm('לחבר את המכשיר הזה לסנכרון הטיול?')) joinSync(u, false); history.replaceState(null, '', location.pathname); }
