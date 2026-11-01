@@ -11,7 +11,7 @@ window.TRIP = {
   end: "2026-11-16",
 
   lodging: [
-    { id: "hotel-eger", name: "Imola Hotel Platán, אגר", dates: "12–15.11 (3 לילות)", status: "booked", maps: "Imola Hotel Platán Eger", note: "ספא, בריכות חמות וסאונות במלון" },
+    { id: "hotel-eger", name: "Imola Hotel Platán - Adults Only, אגר", dates: "12–15.11 (3 לילות)", status: "booked", maps: "Imola Hotel Platán Adults Only Eger", note: "ספא, בריכות חמות וסאונות במלון" },
     { id: "hotel-bud", name: "מלון במרכז בודפשט (טרם נבחר)", dates: "15–16.11 (לילה אחד)", status: "need", maps: "hotels near St. Stephen's Basilica Budapest", note: "רצוי עם חניה — יש רכב שכור עד הבוקר האחרון" },
   ],
 
@@ -30,14 +30,14 @@ window.TRIP = {
         { id: "d1-arrive", t: "13:15", time: "13:15–13:45", icon: "📍", title: "הגעה משוערת לאגר", desc: "חניה בעיר העתיקה בד״כ בתשלום (אזורים בצבעים) — מומלץ לחנות ליד הכיכר ולהסתובב ברגל.", maps: "Eger city center parking" },
         { id: "d1-lunch", t: "13:45", time: "13:45–15:00", icon: "🍽️", title: "ארוחת צהריים בעיר העתיקה", desc: "כמה אפשרויות מוצעות בלשונית 'אוכל' של היום. בנובמבר יש מסעדות שסגורות באמצע השבוע — כדאי לאמת.", wiki: [] },
         { id: "d1-dobo", t: "15:00", time: "15:00–16:00", icon: "🏰", title: "כיכר Dobó, סמטאות העיר וטירת אגר", desc: "הלב ההיסטורי של אגר: כיכר Dobó István עם הכנסייה והבארוק הצבעוני, והטירה שעל שמה נקשר המצור העות׳מאני של 1552, שבו כמה מאות מגינים הונגרים עצרו צבא עות׳מאני ענק. ליד העיר המינרט העות׳מאני הצפוני ביותר באירופה. האור נגמר מוקדם — כדאי לראות את הטירה לפני החשכה ולבדוק שעות פתיחה.", wiki: ["Eger_Castle", "Eger", "Minaret_of_Eger"], maps: "Eger Castle" },
-        { id: "d1-checkin", t: "16:00", time: "16:00–16:30", icon: "🏨", title: "צ'ק-אין במלון Imola Hotel Platán", desc: "ההזמנה אושרה. כדאי לשמור כאן את מספר האישור.", book: true, status: "booked", bookLabel: "מלון אגר", maps: "Imola Hotel Platán Eger" },
+        { id: "d1-checkin", t: "16:00", time: "16:00–16:30", icon: "🏨", title: "צ'ק-אין ב-Imola Hotel Platán - Adults Only", desc: "ההזמנה אושרה. כדאי לשמור כאן את מספר האישור.", book: true, status: "booked", bookLabel: "מלון אגר", maps: "Imola Hotel Platán Adults Only Eger" },
         { id: "d1-spa", t: "17:00", time: "17:00–19:00", icon: "♨️", title: "ספא, בריכות חמות וסאונות", desc: "אגר ידועה במים תרמליים. בדקו שעות ספא ופרוטוקול כניסה (כובע רחצה, כפכפים, מגבות).", wiki: [] },
         { id: "d1-dinner", t: "20:00", time: "ערב", icon: "🍷", title: "ארוחת ערב במלון או במרכז אגר", desc: "אפשרויות בלשונית 'אוכל'. אם בוחרים מסעדה פופולרית — כדאי להזמין שולחן.", wiki: [] },
       ],
       restaurants: [
         { id: "r-macok", name: "Macok Bisztró & Borbár", kind: "ארוחת ערב · יין", desc: "בית קפה/בר יין פופולרי באגר, מטבח הונגרי מודרני ובחירה רחבה של יינות מקומיים (Egri Bikavér). בסופי שבוע ובעונה בד״כ מלא.", maps: "Macok Bisztró Eger", book: true, status: "need", suggested: true },
         { id: "r-feherszarvas", name: "Fehér Szarvas Vendéglő", kind: "צהריים/ערב · הונגרי מסורתי", desc: "מסעדת בשרים ומטבח הונגרי כבד (בשר ציד, גולש). אווירה כפרית. לאמת שעות פתיחה בנובמבר.", maps: "Fehér Szarvas Vendéglő Eger", book: true, status: "need", suggested: true },
-        { id: "r-hotel-eger", name: "מסעדת המלון / ארוחה במלון", kind: "גיבוי נוח", desc: "אם מתעייפים אחרי הספא — אפשרות בטוחה בלי נסיעה.", maps: "Imola Hotel Platán Eger", book: false, status: "na", suggested: true },
+        { id: "r-hotel-eger", name: "מסעדת המלון / ארוחה במלון", kind: "גיבוי נוח", desc: "אם מתעייפים אחרי הספא — אפשרות בטוחה בלי נסיעה.", maps: "Imola Hotel Platán Adults Only Eger", book: false, status: "na", suggested: true },
       ],
     },
     {
