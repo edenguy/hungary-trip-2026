@@ -4,13 +4,13 @@ const KEY = 'hu-trip-v1';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
-const HU_SITE = /(kodmoncsarda\.hu|programturizmus\.hu)/;
+const HU_SITE = /(kodmoncsarda\.hu|programturizmus\.hu|szallas\.hu)/;
 const enUrl = u => HU_SITE.test(u) ? 'https://translate.google.com/translate?sl=hu&tl=en&u=' + encodeURIComponent(u) : u;
 const waUrl = q => 'https://www.google.com/search?tbm=isch&hl=en&q=' + encodeURIComponent(q);
 
 // ---------- state ----------
 let S;
-const blank = () => ({ status: {}, booking: {}, tasks: {}, customTasks: [], customRest: {}, notes: {}, expenses: [], packing: {}, flight: '', pick: {}, vote: {}, names: ['גיא','ענת'], tab: 'day', day: null });
+const blank = () => ({ status: {}, booking: {}, tasks: {}, customTasks: [], customRest: {}, notes: {}, expenses: [], packing: {}, flight: '', pick: {}, vote: {}, names: ['גיא','ענת'], tab: 'day', day: null, mapMode: '', walk: {} });
 function load() { try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { S = blank(); } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { } scheduleSync(); }
 load();
@@ -95,11 +95,12 @@ function render() {
   const d = focusDay();
   const open = openBookings().length, ot = openTasks().length;
   $('#top').innerHTML = `<h1>🍷 ${esc(T.title)}</h1><div class="sub">${esc(T.subtitle)}</div>` + countdown();
-  const tabs = [['day', '📅', 'יום'], ['food', '🍽️', 'אוכל'], ['todo', '✅', `משימות${open + ot ? ' ' + (open + ot) : ''}`], ['more', '🧳', 'עוד']];
+  const tabs = [['day', '📅', 'יום'], ['map', '🗺️', 'מפה'], ['food', '🍽️', 'אוכל'], ['todo', '✅', `משימות${open + ot ? ' ' + (open + ot) : ''}`], ['more', '🧳', 'עוד']];
   $('#nav').innerHTML = tabs.map(([k, i, l]) => `<button class="${S.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}"><span>${i}</span>${l}</button>`).join('');
-  const v = { day: viewDay, food: viewFood, todo: viewTodo, more: viewMore }[S.tab];
+  const v = { day: viewDay, map: viewMap, food: viewFood, todo: viewTodo, more: viewMore }[S.tab];
   $('#app').innerHTML = v(d);
   if (S.tab === 'day') { wireGallery(); }
+  if (S.tab === 'map') initMap(d); else destroyMap();
 }
 function countdown() {
   const t = today(), s = D(T.start), e = D(T.end);
@@ -144,6 +145,7 @@ function viewDay(d) {
   html += `<section class="hero"><div class="hero-top"><span class="big">${d.emoji}</span><div><div class="muted">${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h2>${esc(d.title)}</h2></div></div>
     <p>${esc(d.summary)}</p>
     ${d.note ? `<p class="warn">💡 ${esc(d.note)}</p>` : ''}
+    <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
     <div class="facts"><span>🌇 שקיעה ${d.sunset}</span><span id="wx-${d.id}">⛅ …</span>${opens ? `<span class="red">🟥 ${opens} לסגור</span>` : '<span class="green">🟩 הכל סגור</span>'}</div></section>`;
   if (d.flight) html += flightBox();
   html += `<h3>לוח זמנים</h3><div class="tl">` + d.items.map(i => itemHtml(i, next)).join('') + `</div>`;
@@ -293,6 +295,108 @@ function wireGallery() {
     });
     if (el.open) el.dispatchEvent(new Event('toggle'));
   });
+}
+
+
+// ---------- map: driving route + walking tour ----------
+let MAP = null, rcache = {};
+const dist = (a, b) => { const R = 6371e3, r = x => x * Math.PI / 180, dl = r(b[0] - a[0]), dn = r(b[1] - a[1]), h = Math.sin(dl / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+const kmTxt = m => m >= 1000 ? (m / 1000).toFixed(m > 10000 ? 0 : 1) + ' ק״מ' : Math.round(m / 10) * 10 + ' מ׳';
+const minTxt = s => { const m = Math.round(s / 60); return m >= 60 ? Math.floor(m / 60) + ' שע׳ ' + (m % 60 ? m % 60 + ' דק׳' : '') : Math.max(1, m) + ' דק׳'; };
+const dirLink = (p, mode) => `https://www.google.com/maps/dir/?api=1&hl=en&travelmode=${mode}&destination=${p.ll[0]},${p.ll[1]}`;
+function destroyMap() { if (MAP) { try { MAP.remove(); } catch { } MAP = null; } }
+async function osrm(profile, pts, steps) {
+  const key = profile + pts.map(p => p.join(',')).join(';') + steps;
+  if (rcache[key]) return rcache[key];
+  const c = pts.map(p => p[1] + ',' + p[0]).join(';');
+  const base = profile === 'foot' ? 'https://routing.openstreetmap.de/routed-foot/route/v1/foot/' : 'https://router.project-osrm.org/route/v1/driving/';
+  try {
+    const r = await fetch(`${base}${c}?overview=full&geometries=geojson&steps=${steps ? 'true' : 'false'}`);
+    const j = await r.json(); const rt = j.routes?.[0]; if (!rt) throw 0;
+    return (rcache[key] = rt);
+  } catch { return null; }
+}
+const MOD = { left: 'שמאלה', right: 'ימינה', 'slight left': 'מעט שמאלה', 'slight right': 'מעט ימינה', 'sharp left': 'חד שמאלה', 'sharp right': 'חד ימינה', straight: 'ישר', uturn: 'פניית פרסה' };
+function stepTxt(s) {
+  const m = s.maneuver || {}, nm = s.name ? ' אל ' + s.name : '', t = m.type, mod = MOD[m.modifier] || '';
+  if (t === 'depart') return 'התחילו לנסוע' + nm;
+  if (t === 'arrive') return 'הגעתם ליעד';
+  if (t === 'roundabout' || t === 'rotary') return `בכיכר צאו ביציאה ${m.exit || ''}${nm}`;
+  if (t === 'merge') return 'הצטרפו' + nm;
+  if (t === 'on ramp') return 'היכנסו לרמפה' + nm;
+  if (t === 'off ramp') return 'צאו מהכביש' + nm;
+  if (t === 'fork') return `בפיצול התקדמו ${mod}${nm}`;
+  if (t === 'end of road') return `בסוף הדרך פנו ${mod}${nm}`;
+  if (t === 'turn') return `פנו ${mod}${nm}`;
+  return `המשיכו ${mod || 'ישר'}${nm}`;
+}
+function viewMap(d) {
+  const M = (window.TRIP_MAP || {})[d.id] || {};
+  const mode = M.walk && (S.mapMode === 'walk' || !M.route) ? 'walk' : 'drive';
+  let h = dayChips(d);
+  h += `<h2>${d.emoji} ${esc(d.title)}</h2>`;
+  if (M.route && M.walk) h += `<div class="seg"><button class="${mode === 'drive' ? 'on' : ''}" data-act="mapmode" data-m="drive">🚗 נסיעה והוראות</button><button class="${mode === 'walk' ? 'on' : ''}" data-act="mapmode" data-m="walk">🚶 סיור הליכה</button></div>`;
+  h += `<div id="map"></div><div class="actions"><button class="btn" data-act="locate">📍 איפה אני</button><span class="tiny muted">המפה: OpenStreetMap. הנקודות משוערות — לניווט מדויק השתמשו בכפתורי "נווט".</span></div><div id="mapPanel"></div>`;
+  if (!M.route && !M.walk) h += '<p class="muted">אין מפה ליום הזה.</p>';
+  return h;
+}
+const pin = (txt, cls) => L.divIcon({ className: '', html: `<div class="pin ${cls || ''}">${txt}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+function initMap(d) {
+  destroyMap();
+  const M = (window.TRIP_MAP || {})[d.id] || {}, el = $('#map');
+  if (!el || !window.L || (!M.route && !M.walk)) { if (el && !window.L) el.innerHTML = '<p class="muted pad">המפה לא נטענה.</p>'; return; }
+  MAP = L.map(el, { zoomControl: true, attributionControl: true });
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(MAP);
+  const mode = M.walk && (S.mapMode === 'walk' || !M.route) ? 'walk' : 'drive';
+  if (mode === 'drive') driveMap(d, M.route); else walkMap(d, M.walk);
+}
+async function driveMap(d, route) {
+  const pts = route.map(p => p.ll), bounds = L.latLngBounds(pts);
+  route.forEach((p, i) => L.marker(p.ll, { icon: pin(i === 0 ? 'A' : String.fromCharCode(65 + i)) }).addTo(MAP).bindPopup(esc(p.n)));
+  MAP.fitBounds(bounds.pad(0.2));
+  const panel = $('#mapPanel');
+  const gm = `https://www.google.com/maps/dir/?api=1&hl=en&travelmode=driving&origin=${pts[0]}&destination=${pts[pts.length - 1]}${pts.length > 2 ? '&waypoints=' + pts.slice(1, -1).map(p => p.join(',')).join('|') : ''}`;
+  panel.innerHTML = `<h3>🚗 מסלול הנסיעה</h3><div class="actions"><a class="btn pri" target="_blank" rel="noopener" href="${gm}">🧭 פתח את כל המסלול ב-Google Maps</a><a class="btn" target="_blank" rel="noopener" href="https://waze.com/ul?ll=${pts[pts.length - 1].join(',')}&navigate=yes">Waze ליעד האחרון</a></div><div id="legs"></div>`;
+  const legs = $('#legs'); legs.innerHTML = '<p class="muted">טוען מסלולים…</p>';
+  const out = [];
+  for (let i = 0; i < route.length - 1; i++) {
+    const a = route[i], b = route[i + 1], rt = await osrm('driving', [a.ll, b.ll], true);
+    const col = ['#7a1f2b', '#2e6f95', '#c27c0e'][i % 3];
+    if (rt) { L.geoJSON(rt.geometry, { style: { color: col, weight: 5, opacity: .8 } }).addTo(MAP); }
+    else L.polyline([a.ll, b.ll], { color: col, weight: 3, dashArray: '6 8' }).addTo(MAP);
+    const m = rt ? rt.distance : dist(a.ll, b.ll) * 1.3, s = rt ? rt.duration : m / 20;
+    const steps = rt ? rt.legs[0].steps.filter(x => x.distance > 0 || x.maneuver.type === 'arrive').map(x => `<li>${esc(stepTxt(x))}${x.distance ? ` <small class="muted">(${kmTxt(x.distance)})</small>` : ''}</li>`).join('') : '';
+    out.push(`<details class="item"><summary><span class="ic">${String.fromCharCode(65 + i)}→${String.fromCharCode(66 + i)}</span><span class="tt"><small>${kmTxt(m)} · ${minTxt(s)}${rt ? '' : ' (הערכה)'}</small>${esc(a.n)} ← ${esc(b.n)}</span></summary><div class="det">${steps ? `<ol class="steps">${steps}</ol>` : '<p class="muted">לא ניתן לטעון הוראות כרגע (אין חיבור). ההערכה לפי קו אווירי.</p>'}<div class="actions"><a class="btn" target="_blank" rel="noopener" href="${dirLink(b, 'driving')}">🧭 נווט ליעד</a></div></div></details>`);
+  }
+  if ($('#legs') === legs) legs.innerHTML = out.join('') + '<p class="tiny muted">זמני הנסיעה הם הערכה לפי מסלול רגיל; בפועל תלוי בתנאי הדרך, מזג האוויר ובחושך (בנובמבר החשכה בסביבות 16:00).</p>';
+}
+async function walkMap(d, walk) {
+  const done = (S.walk[d.id] ||= {}), st = walk.stops;
+  const nextI = st.findIndex(s => !done[s.id]), next = st[nextI], prev = nextI > 0 ? st[nextI - 1] : null;
+  const all = st.map(s => s.ll);
+  L.polyline(all, { color: '#7a1f2b', weight: 2, opacity: .45, dashArray: '4 8' }).addTo(MAP);
+  st.forEach((s, i) => { const cls = done[s.id] ? 'done' : (s === next ? 'next' : ''); L.marker(s.ll, { icon: pin(done[s.id] ? '✓' : i + 1, cls), zIndexOffset: s === next ? 1000 : 0 }).addTo(MAP).bindPopup(`<b>${esc(s.n)}</b>`); });
+  MAP.fitBounds(L.latLngBounds(all).pad(0.25));
+  const panel = $('#mapPanel');
+  const list = `<h4>כל הנקודות (${Object.values(done).filter(Boolean).length}/${st.length})</h4><div class="card">` + st.map((s, i) => `<label class="task ${done[s.id] ? 'done' : ''}"><input type="checkbox" data-act="visit" data-id="${s.id}" data-day="${d.id}" ${done[s.id] ? 'checked' : ''}><span>${i + 1}. ${esc(s.n)} <small class="muted">${esc(s.time || '')}</small></span></label>`).join('') + '</div>';
+  if (!next) { panel.innerHTML = `<h3>🎉 סיימתם את הסיור!</h3><p>${esc(walk.title)} — כל הנקודות סומנו.</p>${list}`; if (MAP) MAP.fitBounds(L.latLngBounds(all).pad(0.25)); return; }
+  panel.innerHTML = `<h3>🚶 ${esc(walk.title)}</h3><p class="muted">${esc(walk.intro)}</p>
+    <div class="card next-card"><div class="muted tiny">הנקודה הבאה · ${nextI + 1} מתוך ${st.length}${next.time ? ' · ' + esc(next.time) : ''}</div><h3 style="margin:.2rem 0">${esc(next.n)}</h3>
+    <div class="tiny muted" id="wkinfo">${prev ? 'טוען מרחק מהנקודה הקודמת…' : 'נקודת ההתחלה של הסיור'}</div>
+    <p><b>📜 היסטוריה:</b> ${esc(next.story)}</p><p><b>🌶️ פיקנטריה:</b> ${esc(next.fun)}</p>
+    <div class="actions"><a class="btn" target="_blank" rel="noopener" href="${dirLink(next, 'walking')}">🧭 נווט בהליכה</a><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(next.q || next.n)}">🗺️ מפה</a><button class="btn pri" data-act="visit" data-id="${next.id}" data-day="${d.id}">✅ הייתי</button></div></div>${list}`;
+  if (prev) {
+    const rt = await osrm('foot', [prev.ll, next.ll], false);
+    if (!MAP) return;
+    if (rt) L.geoJSON(rt.geometry, { style: { color: '#2e8b57', weight: 5, opacity: .85 } }).addTo(MAP); else L.polyline([prev.ll, next.ll], { color: '#2e8b57', weight: 4, dashArray: '2 8' }).addTo(MAP);
+    const m = rt ? rt.distance : dist(prev.ll, next.ll) * 1.3, s = rt ? rt.duration : m / 1.2, w = $('#wkinfo');
+    if (w) w.textContent = `🚶 ${kmTxt(m)} · כ-${minTxt(s)} הליכה מ"${prev.n}"${rt ? '' : ' (הערכה)'}`;
+  } else { const rt = next; MAP.setView(next.ll, 16); }
+}
+let me = null;
+function locate() {
+  if (!MAP || !navigator.geolocation) return toast('אין גישה למיקום');
+  navigator.geolocation.getCurrentPosition(p => { const ll = [p.coords.latitude, p.coords.longitude]; if (me) me.remove(); me = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(MAP); MAP.setView(ll, Math.max(MAP.getZoom(), 15)); }, () => toast('לא הצלחתי לקבל מיקום'), { enableHighAccuracy: true, timeout: 8000 });
 }
 
 // ---------- weather ----------
@@ -447,6 +551,9 @@ document.addEventListener('click', e => {
   else if (a === 'sy-share') { const l = shareLink(); if (navigator.share) navigator.share({ title: 'טיול הונגריה', url: l }).catch(() => { }); else (navigator.clipboard?.writeText(l) || Promise.reject()).then(() => toast('הקישור הועתק')).catch(() => prompt('העתיקו:', l)); }
   else if (a === 'sy-now') { syncNow().then(() => render()); }
   else if (a === 'sy-off') { if (confirm('לנתק את הסנכרון? הנתונים נשארים במכשיר.')) { SY.url = ''; SY.meta = {}; SY.last = {}; saveSy(); render(); } }
+  else if (a === 'mapmode') { S.mapMode = t.dataset.m; save(); render(); }
+  else if (a === 'locate') { locate(); }
+  else if (a === 'visit') { const dd = t.dataset.day, m = (S.walk[dd] ||= {}); m[id] = t.type === 'checkbox' ? t.checked : !m[id]; save(); render(); }
   else if (a === 'pick') { const s = t.dataset.slot; S.pick[s] = S.pick[s] === id ? '' : id; save(); keepOpen(); }
   else if (a === 'gotoday') { S.day = id; S.tab = 'day'; save(); render(); scrollTo(0, 0); }
   else if (a === 'rphotos') { const g = document.querySelector(`[data-rgal="${CSS.escape(id)}"]`); if (g) { g.hidden = !g.hidden; if (!g.hidden && !g.dataset.l) { g.dataset.l = 1; fillGal(g, [], t.dataset.q, t.dataset.q + ' Hungary'); } } }

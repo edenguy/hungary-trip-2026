@@ -76,3 +76,11 @@ h4{margin:1rem 0 .3rem;font-size:.98rem}
 .bk.cxrow{grid-template-columns:1fr 1fr;align-items:end}.cx{display:flex;flex-direction:column;gap:2px}.cx.chk{flex-direction:row;align-items:center;gap:6px;font-size:.9rem}.cx.chk input{width:20px;height:20px}
 .cxn{font-size:.9rem;margin-top:6px;font-weight:600}
 [hidden]{display:none!important}
+
+#map{height:46vh;min-height:300px;border-radius:14px;border:1px solid var(--line);margin:8px 0;z-index:0}
+.pin{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 1px 6px #0006;font-size:.85rem}
+.pin.next{background:#e0a100;transform:scale(1.2)}.pin.done{background:var(--green)}
+.seg{display:flex;gap:6px;margin:6px 0}.seg button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:8px;font:inherit;cursor:pointer}.seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.steps{padding-inline-start:1.3rem;margin:4px 0}.steps li{margin:3px 0}
+.next-card{border-color:#e0a100;border-width:2px}
+.pad{padding:12px}
