@@ -118,14 +118,14 @@ function viewDay(d) {
   return html;
 }
 function flightBox() {
-  const v = S.flight;
+  const v = S.flight || T.flightTime || '';
   let calc = '';
   if (v) {
     const [h, m] = v.split(':').map(Number), base = h * 60 + m;
     const f = x => { x = ((x % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
     calc = `<ul class="calc"><li>🛫 המראה: <b>${v}</b></li><li>🚪 להיות בטרמינל: <b>${f(base - 180)}</b></li><li>🚗 להחזיר רכב עד: <b>${f(base - 210)}</b></li><li>⛽ תדלוק: <b>${f(base - 240)}</b></li><li>🏨 לצאת מבודפשט: <b>${f(base - 285)}</b></li></ul>`;
   }
-  return `<section class="card"><b>שעת הטיסה חזרה</b><div class="row"><input type="time" data-act="flight" value="${esc(v)}"></div>${calc}</section>`;
+  return `<section class="card"><b>שעת הטיסה חזרה (LY2366)</b><div class="row"><input type="time" data-act="flight" value="${esc(v)}"></div>${calc}</section>`;
 }
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
