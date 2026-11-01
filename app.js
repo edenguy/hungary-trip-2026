@@ -133,6 +133,7 @@ function itemHtml(i, next) {
     <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
+      ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
       ${i.wiki?.length ? `<div class="gal" data-gal></div>` : ''}
       <div class="actions">${i.maps ? `<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(i.maps)}">🗺️ מפה</a><a class="btn" target="_blank" rel="noopener" href="${'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(i.maps)}">🧭 נווט</a>` : ''}${i.book ? statusBtn(i) : ''}</div>
       ${vettable(i) ? vetBar(i) : ''}${vetoed(i) ? `<p class="warn">🚫 נפסל ע״י ${esc(vetoBy(i))} — אפשר לדלג או להחליף במשהו אחר.</p>` : ''}

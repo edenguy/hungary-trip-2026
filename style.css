@@ -68,3 +68,5 @@ nav button span{display:block;font-size:1.3rem}nav button.on{color:var(--brand);
 .vt{border:2px solid var(--line);background:var(--card);border-radius:99px;padding:3px 9px;font-size:1rem;cursor:pointer;filter:grayscale(1);opacity:.7}
 .vt.up{border-color:var(--green);filter:none;opacity:1}.vt.no{border-color:var(--red);filter:none;opacity:1;background:#d6283922}
 .vetoed{opacity:.55}.vetoed b,.vetoed .tt{text-decoration:line-through}.vetoed .vet,.vetoed .actions{opacity:1}
+
+.hrs{border-radius:10px;padding:8px 10px;margin:6px 0;font-size:.88rem;background:var(--soft)}.hrs-ok{border-inline-start:4px solid var(--green)}.hrs-warn{border-inline-start:4px solid #e0a100}.hrs-unk{border-inline-start:4px solid var(--gray)}
