@@ -69,10 +69,12 @@ function linksHtml(x, name) {
   if (x.info) L.push(`<a class="btn" target="_blank" rel="noopener" href="${esc(enUrl(x.info))}">ℹ️ מידע ואווירה (EN)</a>`);
   if (x.reserve) L.push(`<a class="btn pri" target="_blank" rel="noopener" href="${esc(x.reserve)}">🗓️ הזמנה</a>`);
   if (x.phone) L.push(`<a class="btn" href="tel:${esc(x.phone)}">📞 ${esc(x.phone)}</a>`);
-  if (x.email) L.push(`<a class="btn" href="mailto:${esc(x.email)}?subject=Table%20reservation">✉️ ${esc(x.email)}</a>`);
+  if (x.email) L.push(`<a class="btn" href="mailto:${esc(x.email)}?subject=Table%20reservation&body=${encodeURIComponent(bookMsg(x))}">✉️ ${esc(x.email)}</a>`);
   if (!x.site && !x.reserve) L.push(`<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?hl=en&q=${encodeURIComponent(nm + ' reservation')}">🔎 חיפוש אתר והזמנה</a>`);
   return `<div class="actions links">${L.join('')}</div>${x.bk ? `<div class="tiny muted">📌 ${esc(x.bk)}</div>` : ''}`;
 }
+const rtimeHtml = x => x.rtime ? `<div class="rtime">🗓️ <b>להזמין ל:</b> ${esc(x.rdate || '')} · <bdi dir="ltr">${esc(x.rtime)}</bdi>${x.party ? ' · ' + x.party + ' סועדים' : ''}</div>` : '';
+const bookMsg = x => T.emailTemplate.replace('{PARTY}', x.party || 2).replace('{DATE}', x.rdateEn || '[date]').replace('{TIME}', (x.rtime || '').replace(/ .*/, '') || '[time]');
 const openTasks = () => [...T.tasks, ...S.customTasks].filter(t => !S.tasks[t.id]);
 
 function statusBtn(x) {
@@ -175,7 +177,7 @@ function itemHtml(i, next) {
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
       ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
       ${galOk(i) ? `<div class="gal" data-gal></div><div class="tiny muted">תמונות מ-Wikipedia/Wikimedia לפי חיפוש — להמחשה בלבד · <a target="_blank" rel="noopener" href="${waUrl((i.maps || i.title) + ' Hungary')}">🔎 עוד בגוגל</a></div>` : ''}
-      ${i.book ? linksHtml(i, i.bookLabel || i.title) : ''}
+      ${i.book ? rtimeHtml(i) + linksHtml(i, i.bookLabel || i.title) : ''}
       <div class="actions">${i.maps ? `<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(i.maps)}">🗺️ מפה</a><a class="btn" target="_blank" rel="noopener" href="${'https://www.google.com/maps/dir/?api=1&hl=en&destination=' + encodeURIComponent(i.maps)}">🧭 נווט</a>` : ''}${i.book ? statusBtn(i) : ''}</div>
       ${vettable(i) ? vetBar(i) : ''}${vetoed(i) ? `<p class="warn">🚫 נפסל ע״י ${esc(vetoBy(i))} — אפשר לדלג או להחליף במשהו אחר.</p>` : ''}
       ${i.book && !vetoed(i) ? bookingForm(i) : ''}
@@ -187,6 +189,7 @@ function restHtml(r) {
     ${r.desc ? `<p>${esc(r.desc)}</p>` : ''}
     ${r.hours ? `<div class="hrs hrs-${r.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[r.hl || 'unk']}:</b> ${esc(r.hours)}</div>` : ''}
     <div class="gal" data-rgal="${esc(r.id)}" hidden></div>
+    ${r.book ? rtimeHtml(r) : ''}
     ${r.book ? linksHtml(r) : (r.info || r.phone || r.site ? linksHtml(r) : '')}
     <div class="actions">${r.slot && !vetoed(r) ? `<button class="btn ${picked ? 'pri' : ''}" data-act="pick" data-slot="${esc(r.slot)}" data-id="${esc(r.id)}">${picked ? '✅ נבחרה' : 'בחרו במסעדה הזו'}</button>` : ''}<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(r.maps || r.name)}">🗺️ מפה</a><button class="btn" data-act="rphotos" data-id="${esc(r.id)}" data-q="${esc(r.name + ' ' + (r.maps || ''))}">📷 תמונות</button><a class="btn" target="_blank" rel="noopener" href="${waUrl(r.name + ' Hungary')}">🔎 גוגל</a>${r.book ? `<button class="btn" data-act="copymail" data-id="${esc(r.id)}">✉️ הודעת הזמנה</button>` : ''}${r.custom ? `<button class="btn del" data-act="delrest" data-id="${esc(r.id)}">מחק</button>` : ''}</div>
     ${vetBar(r)}${vetoed(r) ? `<div class="tiny">🚫 נפסל ע״י ${esc(vetoBy(r))} — בחרו אחת מהחלופות.</div>` : ''}${r.book && !vetoed(r) ? bookingForm(r) : ''}${r.suggested ? '<div class="tiny muted">הצעה של Claude — לאמת שעות פתיחה בנובמבר</div>' : ''}</div>`;
@@ -207,7 +210,7 @@ function viewFood() {
 function viewTodo() {
   const b = openBookings();
   let h = `<h2>✅ מה פתוח</h2>`;
-  h += `<h3>🟥 הזמנות שעוד לא נסגרו (${b.length})</h3>` + (b.length ? b.map(x => `<div class="card slim b-need"><div class="rh"><div><b>${esc(x.label)}</b><div class="muted">${(T.days.find(d => d.id === x.day) || {}).dow || ''}</div></div>${statusBtn(x)}</div></div>`).join('') : '<p class="muted">הכל הוזמן 🎉</p>');
+  h += `<h3>🟥 הזמנות שעוד לא נסגרו (${b.length})</h3>` + (b.length ? b.map(x => `<div class="card slim b-need"><div class="rh"><div><b>${esc(x.label)}</b><div class="muted">${(T.days.find(d => d.id === x.day) || {}).dow || ''}${x.rtime ? ' · ' + esc(x.rtime) : ''}</div></div>${statusBtn(x)}</div></div>`).join('') : '<p class="muted">הכל הוזמן 🎉</p>');
   const bkd = allBookables().filter(x => stOf(x) === 'booked' && !x.synthetic);
   const cx = bkd.filter(x => (S.booking[x.id] || {}).cancel && !(S.booking[x.id] || {}).nocancel).sort((p, q) => S.booking[p.id].cancel.localeCompare(S.booking[q.id].cancel));
   const nocx = bkd.filter(x => !(S.booking[x.id] || {}).cancel && !(S.booking[x.id] || {}).nocancel);
@@ -562,7 +565,7 @@ document.addEventListener('click', e => {
   else if (a === 'delrest') { for (const k in S.customRest) S.customRest[k] = S.customRest[k].filter(r => r.id !== id); save(); render(); }
   else if (a === 'deltask') { S.customTasks = S.customTasks.filter(x => x.id !== id); save(); render(); }
   else if (a === 'delexp') { S.expenses.splice(+id, 1); save(); render(); }
-  else if (a === 'copymail') { const msg = T.emailTemplate; (navigator.clipboard?.writeText(msg) || Promise.reject()).then(() => toast('ההודעה הועתקה')).catch(() => prompt('העתיקו:', msg)); }
+  else if (a === 'copymail') { const msg = bookMsg(allBookables().find(b => b.id === id) || {}); (navigator.clipboard?.writeText(msg) || Promise.reject()).then(() => toast('ההודעה הועתקה')).catch(() => prompt('העתיקו:', msg)); }
   else if (a === 'export') { const b = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }), l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'hungary-trip-backup.json'; l.click(); }
   else if (a === 'reset') { if (confirm('למחוק את כל הסימונים וההערות?')) { S = blank(); save(); render(); } }
 });
