@@ -147,6 +147,7 @@ function viewDay(d) {
   html += `<section class="hero"><div class="hero-top"><span class="big">${d.emoji}</span><div><div class="muted">${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h2>${esc(d.title)}</h2></div></div>
     <p>${esc(d.summary)}</p>
     ${d.note ? `<p class="warn">💡 ${esc(d.note)}</p>` : ''}
+    ${d.lore ? `<details class="lore-d"><summary>📖 ${esc(d.lore.t)} — היסטוריה, פיקנטריה ועובדות</summary>${loreHtml(d)}</details>` : ''}
     <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
     <div class="facts"><span>🌇 שקיעה ${d.sunset}</span><span id="wx-${d.id}">⛅ …</span>${opens ? `<span class="red">🟥 ${opens} לסגור</span>` : '<span class="green">🟩 הכל סגור</span>'}</div></section>`;
   if (d.flight) html += flightBox();
@@ -169,12 +170,19 @@ function flightBox() {
 }
 const NOPIC = /^(d\d-(land|car|arrive|back|fuel|return|out|bf|drive|eve|lunch|dinner|free|fly|checkin-air))$/;
 const galOk = i => !NOPIC.test(i.id) && (i.wiki?.length || i.maps);
+const loreHtml = (x, withTitle) => {
+  const L = x.lore; if (!L) return '';
+  const ul = a => a && a.length ? `<ul class="ll">${a.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : '';
+  const sec = (ic, t, body) => body ? `<div class="ls"><b>${ic} ${t}</b>${body}</div>` : '';
+  return `<div class="lore">${withTitle && L.t ? `<h4>${esc(L.t)}</h4>` : ''}${sec('📜', 'היסטוריה', L.h ? `<p>${esc(L.h)}</p>` : '')}${sec('🌶️', 'פיקנטריה', L.f ? `<p>${esc(L.f)}</p>` : '')}${sec('⚡', 'עובדות מהירות', ul(L.q))}${sec('⚠️', 'כדאי לדעת', ul(L.k))}${sec('🍴', 'מה להזמין', ul(L.o))}</div>`;
+};
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
   return `<details class="item ${next === i.id ? 'next' : ''} ${i.book ? 'b-' + stOf(i) : ''} ${vetoed(i) ? 'vetoed' : ''}" data-wiki="${esc((i.wiki || []).join('|'))}" data-q="${esc(i.maps || '')}" data-id="${i.id}" ${next === i.id ? 'open' : ''}>
     <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
+      ${loreHtml(i)}
       ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
       ${galOk(i) ? `<div class="gal" data-gal></div><div class="tiny muted">תמונות מ-Wikipedia/Wikimedia לפי חיפוש — להמחשה בלבד · <a target="_blank" rel="noopener" href="${waUrl((i.maps || i.title) + ' Hungary')}">🔎 עוד בגוגל</a></div>` : ''}
       ${i.book ? rtimeHtml(i) + linksHtml(i, i.bookLabel || i.title) : ''}
@@ -187,6 +195,7 @@ function restHtml(r) {
   const picked = r.slot && S.pick[r.slot] === r.id, dim = r.slot && S.pick[r.slot] && !picked;
   return `<div class="card rest b-${stOf(r)} ${vetoed(r) ? 'vetoed' : ''} ${picked ? 'picked' : ''} ${dim ? 'dim' : ''}"><div class="rh"><div><b>${esc(r.name)}</b><div class="muted">${esc(r.kind || '')}</div></div>${vetoed(r) ? '<span class="st st-na">🚫 נפסל</span>' : r.book ? statusBtn(r) : ''}</div>
     ${r.desc ? `<p>${esc(r.desc)}</p>` : ''}
+    ${loreHtml(r)}
     ${r.hours ? `<div class="hrs hrs-${r.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[r.hl || 'unk']}:</b> ${esc(r.hours)}</div>` : ''}
     <div class="gal" data-rgal="${esc(r.id)}" hidden></div>
     ${r.book ? rtimeHtml(r) : ''}
@@ -237,6 +246,7 @@ function viewMore() {
     (S.expenses.map((e, i) => `<div class="exp"><span>${esc(e.what)}</span><b>${(+e.amt).toLocaleString('he-IL')} ${esc(e.cur || '')}</b><button class="x" data-act="delexp" data-id="${i}">✕</button></div>`).join('') || '<p class="muted">עוד אין הוצאות.</p>') +
     `</div><form data-act="addexp" class="row"><input name="what" placeholder="על מה" required><input name="amt" type="number" step="any" placeholder="סכום" required style="max-width:7rem"><select name="cur"><option>₪</option><option>€</option><option>HUF</option></select><button class="btn pri">הוסף</button></form>`;
   h += `<h3>ℹ️ מידע שימושי</h3><div class="card"><ul class="info">${T.info.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  h += `<h3>🍽️ מילון אוכל הונגרי</h3><div class="card phrases">` + (T.food || []).map(p => `<div style="grid-template-columns:1fr 2fr"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('') + `</div>`;
   h += `<h3>🗣️ ביטויים בהונגרית</h3><div class="card phrases">` + T.phrases.map(p => `<div><span>${p[0]}</span><b>${p[1]}</b><small>${p[2]}</small></div>`).join('') + `</div>`;
   h += `<h3>💾 גיבוי ושחזור</h3><div class="card"><p class="tiny muted">הנתונים נשמרים בדפדפן במכשיר הזה בלבד. כדאי לייצא גיבוי מדי פעם, או לפני החלפת מכשיר.</p><div class="actions"><button class="btn" data-act="export">⬇️ ייצוא</button><label class="btn">⬆️ ייבוא<input type="file" id="imp" accept="application/json" hidden></label><button class="btn" data-act="names">✏️ שמות</button><button class="btn del" data-act="reset">איפוס</button></div></div>`;
   return h;
