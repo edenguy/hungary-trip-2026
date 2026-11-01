@@ -70,3 +70,9 @@ nav button span{display:block;font-size:1.3rem}nav button.on{color:var(--brand);
 .vetoed{opacity:.55}.vetoed b,.vetoed .tt{text-decoration:line-through}.vetoed .vet,.vetoed .actions{opacity:1}
 
 .hrs{border-radius:10px;padding:8px 10px;margin:6px 0;font-size:.88rem;background:var(--soft)}.hrs-ok{border-inline-start:4px solid var(--green)}.hrs-warn{border-inline-start:4px solid #e0a100}.hrs-unk{border-inline-start:4px solid var(--gray)}
+
+h4{margin:1rem 0 .3rem;font-size:.98rem}
+.rest.picked{border-color:var(--green);box-shadow:0 0 0 2px #2e8b5733}.rest.dim{opacity:.6}
+.bk.cxrow{grid-template-columns:1fr 1fr;align-items:end}.cx{display:flex;flex-direction:column;gap:2px}.cx.chk{flex-direction:row;align-items:center;gap:6px;font-size:.9rem}.cx.chk input{width:20px;height:20px}
+.cxn{font-size:.9rem;margin-top:6px;font-weight:600}
+[hidden]{display:none!important}
