@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#7a1f2b"/><text x="50" y="66" font-size="52" text-anchor="middle">🍷</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#7a1f2b"/>
+<circle cx="256" cy="256" r="200" fill="#8fd3d0"/>
+<path d="M56 256a200 200 0 0 0 400 0z" fill="#6fbcbb" opacity=".6"/>
+<g stroke="#5a1520" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+<path d="M170 250c0-90 40-130 86-130s86 40 86 130z" fill="#b5524d"/>
+<path d="M256 120v130M213 135c-14 35-17 75-17 115M299 135c14 35 17 75 17 115" fill="none"/>
+<rect x="244" y="86" width="24" height="36" fill="#b5524d"/>
+<rect x="170" y="250" width="172" height="46" fill="#f3e3d5"/>
+<g fill="#d8c3b4"><rect x="190" y="262" width="22" height="34" rx="11"/><rect x="245" y="262" width="22" height="34" rx="11"/><rect x="300" y="262" width="22" height="34" rx="11"/></g>
+<path d="M110 296l24-52 24 52zM354 296l24-52 24 52z" fill="#b5524d"/>
+<rect x="110" y="296" width="48" height="60" fill="#f3e3d5"/><rect x="354" y="296" width="48" height="60" fill="#f3e3d5"/>
+<path d="M120 356h272v28H120z" fill="#e8d3c3"/>
+<path d="M158 296h196v60H158z" fill="#f3e3d5"/>
+<path d="M170 356V318l17-24 17 24v38M221 356V318l17-24 17 24v38M272 356V318l17-24 17 24v38M323 356V318l17-24 17 24v38" fill="#e8d3c3"/>
+</g>
+</svg>
