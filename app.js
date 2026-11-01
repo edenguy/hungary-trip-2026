@@ -130,7 +130,7 @@ function flightBox() {
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
   return `<details class="item ${next === i.id ? 'next' : ''} ${i.book ? 'b-' + stOf(i) : ''} ${vetoed(i) ? 'vetoed' : ''}" data-wiki="${esc((i.wiki || []).join('|'))}" data-id="${i.id}" ${next === i.id ? 'open' : ''}>
-    <summary><span class="ic">${i.icon}</span><span class="tt"><small>${esc(i.time)}${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
+    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
       ${i.wiki?.length ? `<div class="gal" data-gal></div>` : ''}
