@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102130922';
+const BUILD = '20261102132118';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -42,12 +42,12 @@ const fmt = s => { const d = D(s); return `${d.getDate()}.${d.getMonth() + 1}`; 
 const ST = { need: ['🟥', 'צריך להזמין', 'need'], sent: ['🟧', 'בקשה נשלחה', 'sent'], booked: ['🟩', 'הוזמן', 'booked'], na: ['⬜', 'לא נדרש', 'na'] };
 const NEXT = { need: 'sent', sent: 'booked', booked: 'na', na: 'need' };
 const pickOf = s => (s in S.pick ? S.pick[s] : (T.defaultPicks || {})[s]) || '';
-function stOf(x) { return S.status[x.id] || x.status || 'need'; }
+function stOf(x) { if (x.alias) { const l = T.lodging.find(y => y.id === x.alias) || {}; return S.status[x.alias] || l.status || 'need'; } return S.status[x.id] || x.status || 'need'; }
 function allBookables() {
   const out = [];
   T.lodging.forEach(l => out.push({ ...l, day: l.id === 'hotel-eger' ? 'd1' : 'd4', label: l.name }));
   T.days.forEach(d => {
-    d.items.filter(i => i.book).forEach(i => out.push({ ...i, day: d.id, label: i.bookLabel || i.title }));
+    d.items.filter(i => i.book && !i.alias).forEach(i => out.push({ ...i, day: d.id, label: i.bookLabel || i.title }));
     const all = [...d.restaurants, ...(S.customRest[d.id] || [])];
     all.filter(r => r.book && (!r.slot || pickOf(r.slot) === r.id)).forEach(r => out.push({ ...r, day: d.id, label: r.name }));
     (d.slots || []).forEach(s => { if (!pickOf(s.id) && all.some(r => r.slot === s.id && r.book && !vetoed(r))) out.push({ id: 'slot:' + s.id, synthetic: true, label: 'לבחור מסעדה: ' + s.label, day: d.id, status: 'need' }); });
@@ -114,7 +114,7 @@ function countdown() {
   else msg = '🏡 הטיול הסתיים — מקווים שנהניתם!';
   const open = openBookings().length, wait = allBookables().filter(b => stOf(b) === 'sent' && !vetoed(b)).length;
   const sp = SY.url ? `<span class="pill">${SY.err ? '⚠️ לא מסונכרן' : '🔄 מסונכרן'}</span>` : '';
-  return `<div class="pills"><span class="pill">${msg}</span>${sp}${open ? `<span class="pill red">🟥 ${open} הזמנות פתוחות</span>` : '<span class="pill green">🟩 הכל הוזמן</span>'}${wait ? `<span class="pill amber">🟧 ${wait} ממתינות לאישור</span>` : ''}</div>`;
+  return `<div class="pills"><span class="pill">${msg}</span>${sp}${open ? `<span class="pill red">🟥 ${open} הזמנות פתוחות</span>` : (wait ? '' : '<span class="pill green">🟩 הכל הוזמן</span>')}${wait ? `<span class="pill amber">🟧 ${wait} ממתינות לאישור</span>` : ''}</div>`;
 }
 
 // ----- day view -----
@@ -244,7 +244,7 @@ function viewFood() {
 // ----- todo view -----
 function viewTodo() {
   const b = openBookings();
-  let h = `<h2>✅ מה פתוח</h2>`;
+  let h = `<h2>✅ הזמנות ומשימות</h2>` + summaryHtml();
   h += `<h3>🟥 הזמנות שעוד לא נסגרו (${b.length})</h3>` + (b.length ? b.map(x => `<div class="card slim b-need"><div class="rh"><div><b>${esc(x.label)}</b><div class="muted">${(T.days.find(d => d.id === x.day) || {}).dow || ''}${x.rtime ? ' · ' + esc(x.rtime) : ''}</div></div>${statusBtn(x)}</div></div>`).join('') : '<p class="muted">הכל הוזמן 🎉</p>');
   const wt = allBookables().filter(x => stOf(x) === 'sent' && !vetoed(x));
   if (wt.length) h += `<h3>🟧 ממתינות לאישור (${wt.length})</h3>` + wt.map(x => `<div class="card slim"><div class="rh"><div><b>${esc(x.label)}</b><div class="muted">${(T.days.find(d => d.id === x.day) || {}).dow || ''}${x.rtime ? ' · ' + esc(x.rtime) : ''}</div></div>${statusBtn(x)}</div>${x.sentNote ? `<div class="tiny muted">${esc(x.sentNote)}</div>` : ''}</div>`).join('');
@@ -549,6 +549,47 @@ async function loadHero() {
   }
 }
 
+
+// ---------- bookings summary (one place for everything reserved) ----------
+const AREA = { 'd1-lunch': 'Eger', 'd1-dinner': 'Eger', 'd2-lunch': 'Lillafüred', 'd2-dinner': 'Eger', 'd3-lunch': 'Noszvaj', 'd3-dinner': 'Eger', 'd4-lunch': 'Budapest', 'd4-dinner': 'Budapest' };
+const EN_DOW = { d1: 'Thu 12 Nov', d2: 'Fri 13 Nov', d3: 'Sat 14 Nov', d4: 'Sun 15 Nov', d5: 'Mon 16 Nov' };
+const EN_ITEM = { 'd1-car': 'Car pickup, Budapest Airport (BUD)', 'd1-checkin': 'Hotel: Imola Hotel Platán Adults Only, Eger (12–15 Nov)', 'd2-cave': 'Anna Cave, Lillafüred', 'd4-hotel': 'Hotel in Budapest (15–16 Nov)' };
+const SQ = { need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' };
+function bookingRows() {
+  const rows = [];
+  T.days.forEach(d => {
+    d.items.filter(i => i.book).forEach(i => rows.push({ d, key: i.alias || i.id, time: (i.rtime || i.time || '').replace(/ \(.*/, ''), name: i.bookLabel || i.title, en: EN_ITEM[i.id] || i.title, addr: '', st: stOf(i), x: i, kind: 'item' }));
+    (d.slots || []).forEach(s => {
+      const p = pickOf(s.id), r = mealOpts(d, s).find(x => x.id === p);
+      if (!r) rows.push({ d, key: 'slot:' + s.id, time: '', name: 'לבחור מסעדה: ' + s.label, en: 'Restaurant not chosen yet (' + s.id + ')', addr: '', st: 'need', synthetic: true, kind: 'none' });
+      else rows.push({ d, key: r.id, time: (r.rtimeUnverified && r.status !== 'booked' ? '~' : '') + (r.rtime || ''), name: r.name, en: r.name, addr: r.addr || AREA[s.id] || '', st: stOf(r), x: r, kind: 'rest' });
+    });
+  });
+  const order = d => T.days.indexOf(d);
+  return rows.map((r, i) => ({ ...r, i })).sort((p, q) => order(p.d) - order(q.d) || (p.time.replace('~', '') || '99').localeCompare(q.time.replace('~', '') || '99') || p.i - q.i);
+}
+function summaryHtml() {
+  const rows = bookingRows(), cnt = s => rows.filter(r => r.st === s).length;
+  let h = `<h3>📋 סיכום הזמנות</h3><div class="pills"><span class="pill green">🟩 ${cnt('booked')} אושרו</span><span class="pill amber">🟧 ${cnt('sent')} ממתינות</span><span class="pill red">🟥 ${cnt('need')} פתוחות</span></div>
+  <div class="actions"><button class="btn pri" data-act="copysum" data-l="he">📋 העתק לווטסאפ (עברית)</button><button class="btn" data-act="copysum" data-l="en">📋 Copy (English)</button></div>`;
+  T.days.forEach(d => {
+    const rs = rows.filter(r => r.d === d); if (!rs.length) return;
+    h += `<div class="card sum"><div class="muted tiny">${d.dow} ${fmt(d.date)}</div>` + rs.map(r => `<div class="srow"><div class="stime"><bdi dir="ltr">${esc(r.time || '—')}</bdi></div><div class="sname"><b>${esc(r.name)}</b>${r.addr ? `<div class="tiny muted">${esc(r.addr)}</div>` : ''}</div><div class="sact">${r.synthetic ? `<button class="st st-need sm" data-act="gotoday" data-id="${d.id}" style="pointer-events:auto">בחרו ›</button>` : `<button class="st st-${r.st}" data-act="cycle" data-id="${esc(r.key)}">${ST[r.st][0]} ${ST[r.st][1]}</button>`}${r.kind === 'rest' ? `<a class="btn" style="height:30px;padding:0 10px" target="_blank" rel="noopener" href="${navUrl(r.x)}">🧭</a>` : ''}</div></div>`).join('') + `</div>`;
+  });
+  return h;
+}
+function summaryText(lang) {
+  const rows = bookingRows(), en = lang === 'en';
+  const L = [en ? "*Anat & Guy's Birthday Trip — Hungary, 12–16 Nov 2026*" : '*טיול יום הולדת של ענת וגיא — הונגריה 12–16.11.2026*', en ? '🟩 = confirmed   🟧 = request sent, awaiting reply   🟥 = not booked yet' : '🟩 = אושר   🟧 = נשלחה בקשה   🟥 = עוד לא הוזמן', ''];
+  T.days.forEach(d => {
+    const rs = rows.filter(r => r.d === d); if (!rs.length) return;
+    L.push(`*${en ? EN_DOW[d.id] : d.dow + ' ' + fmt(d.date)}*`);
+    rs.forEach(r => L.push(`${SQ[r.st]} ${r.time ? r.time + ' · ' : ''}${en ? r.en : r.name}${r.addr ? ' — ' + r.addr : ''}`));
+    L.push('');
+  });
+  return L.join('\n').trim();
+}
+
 // ---------- weather ----------
 const wxc = {};
 async function fetchWeather(d) {
@@ -709,6 +750,7 @@ document.addEventListener('click', e => {
   else if (a === 'mapmode') { S.mapMode = t.dataset.m; save(); render(); }
   else if (a === 'locate') { locate(); }
   else if (a === 'visit') { const dd = t.dataset.day, m = (S.walk[dd] ||= {}); m[id] = t.type === 'checkbox' ? t.checked : !m[id]; save(); render(); }
+  else if (a === 'copysum') { const msg = summaryText(t.dataset.l); (navigator.clipboard?.writeText(msg) || Promise.reject()).then(() => toast(t.dataset.l === 'en' ? 'Copied' : 'הועתק — אפשר להדביק בווטסאפ')).catch(() => prompt('העתיקו:', msg)); }
   else if (a === 'pick') { const s = t.dataset.slot; S.pick[s] = pickOf(s) === id ? '' : id; save(); keepOpen(); }
   else if (a === 'gotoday') { S.day = id; S.tab = 'day'; save(); render(); scrollTo(0, 0); }
   else if (a === 'rphotos') { const g = document.querySelector(`[data-rgal="${CSS.escape(id)}"]`); if (g) { g.hidden = !g.hidden; if (!g.hidden && !g.dataset.l) { g.dataset.l = 1; fillGal(g, [], t.dataset.q, t.dataset.q + ' Hungary'); } } }
