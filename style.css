@@ -183,3 +183,8 @@ button.gp{font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
 .stime{width:52px;flex:none;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;color:var(--ink2)}
 .sname{flex:1;min-width:0;line-height:1.35}.sname b{font-size:15px}
 .sact{display:flex;gap:6px;align-items:center;flex:none;flex-wrap:wrap;justify-content:flex-end;max-width:46%}
+
+.glow{display:inline-flex;align-items:center;gap:6px;background:#ffe14d;color:#3d3000;border-radius:99px;padding:3px 11px;font-weight:800;font-size:12.5px;margin-top:6px;box-shadow:0 0 8px 1px rgba(255,214,0,.6);animation:glowpulse 1.8s ease-in-out infinite}
+.glow.sm{margin:0 4px;padding:1px 8px;font-size:11.5px}
+@keyframes glowpulse{0%,100%{box-shadow:0 0 6px 1px rgba(255,214,0,.5)}50%{box-shadow:0 0 20px 6px rgba(255,214,0,.95)}}
+@media (prefers-reduced-motion:reduce){.glow{animation:none}}

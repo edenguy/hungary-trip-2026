@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102152820';
+const BUILD = '20261102175625';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -75,6 +75,7 @@ function linksHtml(x, name) {
   if (!x.site && !x.reserve) L.push(`<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?hl=en&q=${encodeURIComponent(nm + ' reservation')}">🔎 חיפוש אתר והזמנה</a>`);
   return `<div class="actions links">${L.join('')}</div>${x.bk ? `<div class="tiny muted">📌 ${esc(x.bk)}</div>` : ''}`;
 }
+const dishBadge = r => r && r.dish && r.dish.includes('pacal') ? `<span class="glow" title="${esc(r.dishNote || '')}">🍲 יש פקל · pacalpörkölt</span>` : '';
 const rtimeHtml = x => x.rtime ? `<div class="rtime">🗓️ <b>להזמין ל:</b> ${esc(x.rdate || '')} · <bdi dir="ltr">${esc(x.rtime)}</bdi>${x.party ? ' · ' + x.party + ' סועדים' : ''}</div>` : '';
 const bookMsg = x => T.emailTemplate.replace('{PARTY}', x.party || 2).replace('{DATE}', x.rdateEn || '[date]').replace('{TIME}', (x.rtime || '').replace(/ .*/, '') || '[time]');
 const openTasks = () => [...T.tasks, ...S.customTasks].filter(t => !S.tasks[t.id]);
@@ -152,7 +153,7 @@ function mealCard(d, s) {
   if (!r) return `<div class="meal none"><div class="muted tiny">${esc(s.label)}</div><b>עוד לא בחרתם מסעדה</b> <span class="muted">· ${opts.length} אפשרויות למטה</span></div>`;
   const others = opts.filter(x => x !== r && ['sent', 'booked'].includes(stOf(x)) && !vetoed(x));
   return `<div class="meal"><div class="muted tiny">${esc(s.label)}</div>
-    <div class="rh"><b>${esc(r.name)}</b>${r.book ? statusBtn(r) : ''}</div>
+    <div class="rh"><div><b>${esc(r.name)}</b>${dishBadge(r)}</div>${r.book ? statusBtn(r) : ''}</div>
     ${r.rtime ? `<div class="tiny">🗓️ ${esc(r.rdate || '')} · <bdi dir="ltr">${esc(r.rtime)}</bdi>${r.party ? ' · ' + r.party + ' סועדים' : ''}</div>` : ''}
     <div class="tiny muted">📍 ${r.addr ? esc(r.addr) : 'הניווט לפי שם המסעדה — ודאו במפה שזה המקום הנכון'}</div>
     ${r.sentNote ? `<div class="tiny muted">✉️ ${esc(r.sentNote)}</div>` : ''}
@@ -202,7 +203,7 @@ const loreHtml = (x, withTitle) => {
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
   return `<details class="item ${next === i.id ? 'next' : ''} ${i.book ? 'b-' + stOf(i) : ''} ${vetoed(i) ? 'vetoed' : ''}" data-wiki="${esc((i.wiki || []).join('|'))}" data-q="${esc(i.maps || '')}" data-id="${i.id}" ${next === i.id ? 'open' : ''}>
-    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}${(() => { const m = slotOfItem(i); if (!m) return ''; const r = mealOpts(m.d, m.s).find(x => x.id === pickOf(m.s.id)); return r ? `<span class="msub">${r.book ? ({ need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' }[stOf(r)]) : ''} ${esc(r.name.split(/[(—·]/)[0].trim())}</span>` : '<span class="msub">בחרו מסעדה</span>'; })()}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? (['need', 'sent'].includes(stOf(i)) ? `<span class="st st-${stOf(i)} sm">${ST[stOf(i)][0]} ${ST[stOf(i)][1]}</span>` : `<span class="dot">${ST[stOf(i)][0]}</span>`) : ''}</summary>
+    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}${(() => { const m = slotOfItem(i); if (!m) return ''; const r = mealOpts(m.d, m.s).find(x => x.id === pickOf(m.s.id)); return r ? `<span class="msub">${r.book ? ({ need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' }[stOf(r)]) : ''} ${esc(r.name.split(/[(—·]/)[0].trim())}${dishBadge(r) ? ' <span class="glow sm">🍲 פקל</span>' : ''}</span>` : '<span class="msub">בחרו מסעדה</span>'; })()}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? (['need', 'sent'].includes(stOf(i)) ? `<span class="st st-${stOf(i)} sm">${ST[stOf(i)][0]} ${ST[stOf(i)][1]}</span>` : `<span class="dot">${ST[stOf(i)][0]}</span>`) : ''}</summary>
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
       ${(() => { const m = slotOfItem(i); return m ? mealCard(m.d, m.s) : ''; })()}
@@ -218,7 +219,7 @@ function itemHtml(i, next) {
 }
 function restHtml(r) {
   const picked = r.slot && pickOf(r.slot) === r.id, dim = r.slot && pickOf(r.slot) && !picked;
-  return `<div class="card rest b-${stOf(r)} ${vetoed(r) ? 'vetoed' : ''} ${picked ? 'picked' : ''} ${dim ? 'dim' : ''}"><div class="rh"><div><b>${esc(r.name)}</b><div class="muted">${esc(r.kind || '')}</div></div>${vetoed(r) ? '<span class="st st-na">🚫 נפסל</span>' : r.book ? statusBtn(r) : ''}</div>
+  return `<div class="card rest b-${stOf(r)} ${vetoed(r) ? 'vetoed' : ''} ${picked ? 'picked' : ''} ${dim ? 'dim' : ''}"><div class="rh"><div><b>${esc(r.name)}</b><div class="muted">${esc(r.kind || '')}</div>${dishBadge(r)}</div>${vetoed(r) ? '<span class="st st-na">🚫 נפסל</span>' : r.book ? statusBtn(r) : ''}</div>
     ${r.desc ? `<p>${esc(r.desc)}</p>` : ''}
     ${r.sentNote ? `<div class="hrs hrs-warn">✉️<span>${esc(r.sentNote)}</span></div>` : ''}
     ${loreHtml(r)}
@@ -232,7 +233,11 @@ function restHtml(r) {
 
 // ----- food view -----
 function viewFood() {
-  let h = `<h2>🍽️ לאן אוכלים</h2>` + T.days.filter(d => (d.slots || []).length).map(d => `<h3>${d.dow} ${fmt(d.date)}</h3>` + mealsHtml(d)).join('') + `<h2 style="margin-top:2rem">כל האפשרויות</h2><div class="legend"><span>🟥 צריך להזמין</span><span>🟩 הוזמן</span><span>⬜ לא נדרש</span></div>`;
+  const pac = T.days.flatMap(d => d.restaurants.filter(r => r.dish && r.dish.includes('pacal')).map(r => ({ d, r }))), other = T.days.flatMap(d => d.restaurants.filter(r => r.slot && !(r.dish && r.dish.includes('pacal')) && pickOf(r.slot) === r.id).map(r => ({ d, r })));
+  let h = `<h2>🍲 פקל וחלקי פנים — איפה?</h2><div class="card">${pac.map(({ d, r }) => `<div class="rh"><div><b>${esc(r.name)}</b> ${dishBadge(r)}<div class="tiny muted">${d.dow} ${fmt(d.date)} · ${esc(r.rtime || '')}${r.addr ? ' · ' + esc(r.addr) : ''}</div><div class="tiny">${esc(r.dishNote || '')}</div></div>${r.book ? statusBtn(r) : ''}</div><div class="actions"><a class="btn pri" target="_blank" rel="noopener" href="${navUrl(r)}">🧭 נווט</a></div>`).join('')}
+    <p class="tiny muted"><b>חלקי פנים (belsőség):</b> במסעדות שלכם לא מצאתי אף מקום שמאשר אותם בתפריט, ולכן לא סימנתי. לשאול בעת ההזמנה, או במקום: <b>Van pacalpörkölt?</b> (יש פקל?) · <b>Van máj / velő / vese?</b> (יש כבד / מח עצם / כליות?).</p>
+    <p class="tiny muted">נבחרו אצלכם ולא אומת שיש בהם: ${other.map(({ r }) => esc(r.name.split(/[(—·]/)[0].trim())).join(' · ')}.</p></div>
+    <h2 style="margin-top:2rem">🍽️ לאן אוכלים</h2>` + T.days.filter(d => (d.slots || []).length).map(d => `<h3>${d.dow} ${fmt(d.date)}</h3>` + mealsHtml(d)).join('') + `<h2 style="margin-top:2rem">כל האפשרויות</h2><div class="legend"><span>🟥 צריך להזמין</span><span>🟩 הוזמן</span><span>⬜ לא נדרש</span></div>`;
   T.days.forEach(d => {
     const rest = restOf(d);
     h += `<h3>${d.emoji} ${d.dow} ${fmt(d.date)} — ${esc(d.title)}</h3>` + (rest.length ? restSection(d) : '<p class="muted">אין מסעדות.</p>') +
@@ -574,7 +579,7 @@ function summaryHtml() {
   <div class="actions"><button class="btn pri" data-act="copysum" data-l="he">📋 העתק לווטסאפ (עברית)</button><button class="btn" data-act="copysum" data-l="en">📋 Copy (English)</button></div>`;
   T.days.forEach(d => {
     const rs = rows.filter(r => r.d === d); if (!rs.length) return;
-    h += `<div class="card sum"><div class="muted tiny">${d.dow} ${fmt(d.date)}</div>` + rs.map(r => `<div class="srow"><div class="stime"><bdi dir="ltr">${esc(r.time || '—')}</bdi></div><div class="sname"><b>${esc(r.name)}</b>${r.addr ? `<div class="tiny muted">${esc(r.addr)}</div>` : ''}</div><div class="sact">${r.synthetic ? `<button class="st st-need sm" data-act="gotoday" data-id="${d.id}" style="pointer-events:auto">בחרו ›</button>` : `<button class="st st-${r.st}" data-act="cycle" data-id="${esc(r.key)}">${ST[r.st][0]} ${ST[r.st][1]}</button>`}${r.kind === 'rest' ? `<a class="btn" style="height:30px;padding:0 10px" target="_blank" rel="noopener" href="${navUrl(r.x)}">🧭</a>` : ''}</div></div>`).join('') + `</div>`;
+    h += `<div class="card sum"><div class="muted tiny">${d.dow} ${fmt(d.date)}</div>` + rs.map(r => `<div class="srow"><div class="stime"><bdi dir="ltr">${esc(r.time || '—')}</bdi></div><div class="sname"><b>${esc(r.name)}</b>${r.x ? dishBadge(r.x) : ''}${r.addr ? `<div class="tiny muted">${esc(r.addr)}</div>` : ''}</div><div class="sact">${r.synthetic ? `<button class="st st-need sm" data-act="gotoday" data-id="${d.id}" style="pointer-events:auto">בחרו ›</button>` : `<button class="st st-${r.st}" data-act="cycle" data-id="${esc(r.key)}">${ST[r.st][0]} ${ST[r.st][1]}</button>`}${r.kind === 'rest' ? `<a class="btn" style="height:30px;padding:0 10px" target="_blank" rel="noopener" href="${navUrl(r.x)}">🧭</a>` : ''}</div></div>`).join('') + `</div>`;
   });
   return h;
 }
