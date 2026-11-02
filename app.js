@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261101175710';
+const BUILD = '20261102111042';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -39,8 +39,9 @@ function whenLabel(d) {
 const fmt = s => { const d = D(s); return `${d.getDate()}.${d.getMonth() + 1}`; };
 
 // ---------- booking status ----------
-const ST = { need: ['🟥', 'צריך להזמין', 'need'], booked: ['🟩', 'הוזמן', 'booked'], na: ['⬜', 'לא נדרש', 'na'] };
-const NEXT = { need: 'booked', booked: 'na', na: 'need' };
+const ST = { need: ['🟥', 'צריך להזמין', 'need'], sent: ['🟧', 'בקשה נשלחה', 'sent'], booked: ['🟩', 'הוזמן', 'booked'], na: ['⬜', 'לא נדרש', 'na'] };
+const NEXT = { need: 'sent', sent: 'booked', booked: 'na', na: 'need' };
+const pickOf = s => (s in S.pick ? S.pick[s] : (T.defaultPicks || {})[s]) || '';
 function stOf(x) { return S.status[x.id] || x.status || 'need'; }
 function allBookables() {
   const out = [];
@@ -48,8 +49,8 @@ function allBookables() {
   T.days.forEach(d => {
     d.items.filter(i => i.book).forEach(i => out.push({ ...i, day: d.id, label: i.bookLabel || i.title }));
     const all = [...d.restaurants, ...(S.customRest[d.id] || [])];
-    all.filter(r => r.book && (!r.slot || S.pick[r.slot] === r.id)).forEach(r => out.push({ ...r, day: d.id, label: r.name }));
-    (d.slots || []).forEach(s => { if (!S.pick[s.id] && all.some(r => r.slot === s.id && r.book && !vetoed(r))) out.push({ id: 'slot:' + s.id, synthetic: true, label: 'לבחור מסעדה: ' + s.label, day: d.id, status: 'need' }); });
+    all.filter(r => r.book && (!r.slot || pickOf(r.slot) === r.id)).forEach(r => out.push({ ...r, day: d.id, label: r.name }));
+    (d.slots || []).forEach(s => { if (!pickOf(s.id) && all.some(r => r.slot === s.id && r.book && !vetoed(r))) out.push({ id: 'slot:' + s.id, synthetic: true, label: 'לבחור מסעדה: ' + s.label, day: d.id, status: 'need' }); });
   });
   return out;
 }
@@ -111,9 +112,9 @@ function countdown() {
   if (t < s) msg = `⏳ עוד ${dayDiff(s, t)} ימים לנסיעה`;
   else if (t <= e) msg = `🎒 יום ${dayDiff(t, s) + 1} מתוך ${T.days.length}`;
   else msg = '🏡 הטיול הסתיים — מקווים שנהניתם!';
-  const open = openBookings().length;
+  const open = openBookings().length, wait = allBookables().filter(b => stOf(b) === 'sent' && !vetoed(b)).length;
   const sp = SY.url ? `<span class="pill">${SY.err ? '⚠️ לא מסונכרן' : '🔄 מסונכרן'}</span>` : '';
-  return `<div class="pills"><span class="pill">${msg}</span>${sp}${open ? `<span class="pill red">🟥 ${open} הזמנות פתוחות</span>` : '<span class="pill green">🟩 הכל הוזמן</span>'}</div>`;
+  return `<div class="pills"><span class="pill">${msg}</span>${sp}${open ? `<span class="pill red">🟥 ${open} הזמנות פתוחות</span>` : '<span class="pill green">🟩 הכל הוזמן</span>'}${wait ? `<span class="pill amber">🟧 ${wait} ממתינות לאישור</span>` : ''}</div>`;
 }
 
 // ----- day view -----
@@ -131,7 +132,7 @@ function restSection(d) {
   const all = [...d.restaurants, ...(S.customRest[d.id] || [])];
   let h = '';
   (d.slots || []).forEach(s => {
-    const opts = all.filter(r => r.slot === s.id).sort((x, y) => vetoed(x) - vetoed(y)), p = S.pick[s.id], live = opts.filter(r => !vetoed(r));
+    const opts = all.filter(r => r.slot === s.id).sort((x, y) => vetoed(x) - vetoed(y)), p = pickOf(s.id), live = opts.filter(r => !vetoed(r));
     h += `<h4>${esc(s.label)} <small class="muted">${p ? '✅ נבחרה אפשרות' : 'בחרו אחת מ-' + opts.length}</small></h4>`;
     if (!live.length) h += '<p class="warn">⚠️ כל האפשרויות נפסלו — הוסיפו חלופה בלשונית "אוכל".</p>';
     else if (live.length === 1 && !p) h += '<p class="tiny muted">נשארה אפשרות אחת — אפשר לבחור בה.</p>';
@@ -143,11 +144,11 @@ function restSection(d) {
 }
 function viewDay(d) {
   const next = nowNext(d);
-  const opens = allBookables().filter(b => b.day === d.id && stOf(b) === 'need' && !vetoed(b)).length;
+  const opens = allBookables().filter(b => b.day === d.id && stOf(b) === 'need' && !vetoed(b)).length, waits = allBookables().filter(b => b.day === d.id && stOf(b) === 'sent' && !vetoed(b)).length;
   let html = dayChips(d);
   const idx = T.days.findIndex(x => x.id === d.id) + 1;
   html += `<section class="hero" data-hero="${esc(d.hero || '')}"><div class="hero-inner"><div class="eyebrow">יום ${idx} מתוך ${T.days.length} · ${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h1 class="hero-title">${esc(d.title)}</h1>
-    <div class="hero-pills"><span class="gp">🌇 שקיעה ${d.sunset}</span><span class="gp" id="wx-${d.id}">⛅ …</span>${opens ? `<span class="gp need">🟥 ${opens} לסגור</span>` : '<span class="gp done">🟩 הכל סגור</span>'}</div></div></section>
+    <div class="hero-pills"><span class="gp">🌇 שקיעה ${d.sunset}</span><span class="gp" id="wx-${d.id}">⛅ …</span>${opens ? `<span class="gp need">🟥 ${opens} לסגור</span>` : '<span class="gp done">🟩 הכל סגור</span>'}${waits ? `<span class="gp wait">🟧 ${waits} ממתינות לאישור</span>` : ''}</div></div></section>
     <p class="lead">${esc(d.summary)}</p>
     ${d.note ? `<div class="warn">💡<span>${esc(d.note)}</span></div>` : ''}
     <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
@@ -194,9 +195,10 @@ function itemHtml(i, next) {
     </div></details>`;
 }
 function restHtml(r) {
-  const picked = r.slot && S.pick[r.slot] === r.id, dim = r.slot && S.pick[r.slot] && !picked;
+  const picked = r.slot && pickOf(r.slot) === r.id, dim = r.slot && pickOf(r.slot) && !picked;
   return `<div class="card rest b-${stOf(r)} ${vetoed(r) ? 'vetoed' : ''} ${picked ? 'picked' : ''} ${dim ? 'dim' : ''}"><div class="rh"><div><b>${esc(r.name)}</b><div class="muted">${esc(r.kind || '')}</div></div>${vetoed(r) ? '<span class="st st-na">🚫 נפסל</span>' : r.book ? statusBtn(r) : ''}</div>
     ${r.desc ? `<p>${esc(r.desc)}</p>` : ''}
+    ${r.sentNote ? `<div class="hrs hrs-warn">✉️<span>${esc(r.sentNote)}</span></div>` : ''}
     ${loreHtml(r)}
     ${r.hours ? `<div class="hrs hrs-${r.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[r.hl || 'unk']}:</b> ${esc(r.hours)}</div>` : ''}
     <div class="gal" data-rgal="${esc(r.id)}" hidden></div>
@@ -222,6 +224,8 @@ function viewTodo() {
   const b = openBookings();
   let h = `<h2>✅ מה פתוח</h2>`;
   h += `<h3>🟥 הזמנות שעוד לא נסגרו (${b.length})</h3>` + (b.length ? b.map(x => `<div class="card slim b-need"><div class="rh"><div><b>${esc(x.label)}</b><div class="muted">${(T.days.find(d => d.id === x.day) || {}).dow || ''}${x.rtime ? ' · ' + esc(x.rtime) : ''}</div></div>${statusBtn(x)}</div></div>`).join('') : '<p class="muted">הכל הוזמן 🎉</p>');
+  const wt = allBookables().filter(x => stOf(x) === 'sent' && !vetoed(x));
+  if (wt.length) h += `<h3>🟧 ממתינות לאישור (${wt.length})</h3>` + wt.map(x => `<div class="card slim"><div class="rh"><div><b>${esc(x.label)}</b><div class="muted">${(T.days.find(d => d.id === x.day) || {}).dow || ''}${x.rtime ? ' · ' + esc(x.rtime) : ''}</div></div>${statusBtn(x)}</div>${x.sentNote ? `<div class="tiny muted">${esc(x.sentNote)}</div>` : ''}</div>`).join('');
   const bkd = allBookables().filter(x => stOf(x) === 'booked' && !x.synthetic);
   const cx = bkd.filter(x => (S.booking[x.id] || {}).cancel && !(S.booking[x.id] || {}).nocancel).sort((p, q) => S.booking[p.id].cancel.localeCompare(S.booking[q.id].cancel));
   const nocx = bkd.filter(x => !(S.booking[x.id] || {}).cancel && !(S.booking[x.id] || {}).nocancel);
@@ -480,7 +484,7 @@ const EMO = { '✈': 'plane', '🛫': 'plane-takeoff', '🛬': 'plane-landing', 
 const EMO_RE = /[\p{Extended_Pictographic}⟳]️?/gu, EMO_TEST = /[\p{Extended_Pictographic}⟳]/u, SVGNS = 'http://www.w3.org/2000/svg';
 function emoNode(ch) {
   const c = ch.replace(/️/g, '');
-  if (c === '🟥' || c === '🟩' || c === '⬜') { const s = document.createElement('i'); s.className = 'sq ' + (c === '🟥' ? 'sq-r' : c === '🟩' ? 'sq-g' : 'sq-n'); return s; }
+  if (c === '🟥' || c === '🟩' || c === '⬜' || c === '🟧') { const s = document.createElement('i'); s.className = 'sq ' + (c === '🟥' ? 'sq-r' : c === '🟩' ? 'sq-g' : c === '🟧' ? 'sq-a' : 'sq-n'); return s; }
   const n = EMO[c]; if (!n) return document.createTextNode('');
   const s = document.createElementNS(SVGNS, 'svg'); s.setAttribute('class', 'i'); const u = document.createElementNS(SVGNS, 'use'); u.setAttribute('href', '#i-' + n); s.appendChild(u); return s;
 }
@@ -683,7 +687,7 @@ document.addEventListener('click', e => {
   else if (a === 'mapmode') { S.mapMode = t.dataset.m; save(); render(); }
   else if (a === 'locate') { locate(); }
   else if (a === 'visit') { const dd = t.dataset.day, m = (S.walk[dd] ||= {}); m[id] = t.type === 'checkbox' ? t.checked : !m[id]; save(); render(); }
-  else if (a === 'pick') { const s = t.dataset.slot; S.pick[s] = S.pick[s] === id ? '' : id; save(); keepOpen(); }
+  else if (a === 'pick') { const s = t.dataset.slot; S.pick[s] = pickOf(s) === id ? '' : id; save(); keepOpen(); }
   else if (a === 'gotoday') { S.day = id; S.tab = 'day'; save(); render(); scrollTo(0, 0); }
   else if (a === 'rphotos') { const g = document.querySelector(`[data-rgal="${CSS.escape(id)}"]`); if (g) { g.hidden = !g.hidden; if (!g.hidden && !g.dataset.l) { g.dataset.l = 1; fillGal(g, [], t.dataset.q, t.dataset.q + ' Hungary'); } } }
   else if (a === 'vote') { const v = (S.vote[id] ||= {}), w = t.dataset.who; v[w] = v[w] === t.dataset.v ? '' : t.dataset.v; save(); keepOpen(); }

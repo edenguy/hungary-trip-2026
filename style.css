@@ -162,3 +162,8 @@ nav button.on .i{stroke-width:2}
 .rest .actions .btn,.item .actions .btn,.links .btn{height:34px;padding:0 12px;font-size:13px;gap:6px}
 .brand{font-size:14px;color:var(--ink);font-weight:700}
 .links{margin:8px 0 4px}
+
+.sq-a{background:var(--amber)}
+.st-sent{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 38%,transparent);background:var(--amber-t)}
+.pill.amber{color:var(--amber);background:var(--amber-t);border-color:transparent}
+.gp.wait{background:rgba(169,107,11,.62);border-color:rgba(255,255,255,.3)}
