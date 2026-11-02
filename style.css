@@ -168,3 +168,8 @@ nav button.on .i{stroke-width:2}
 .pill.amber{color:var(--amber);background:var(--amber-t);border-color:transparent}
 .gp.wait{background:rgba(169,107,11,.62);border-color:rgba(255,255,255,.3)}
 .card.b-sent,.item.b-sent{border-inline-start:3px solid var(--amber)}
+
+.meal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:8px 0}
+.meal.none{border-style:dashed;color:var(--mut)}
+.meal .rh b{font-size:17px}
+.msub{display:block;font-weight:500;font-size:13px;color:var(--accent);margin-top:2px}

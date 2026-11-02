@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102111104';
+const BUILD = '20261102111452';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -142,6 +142,25 @@ function restSection(d) {
   if (extra.length) h += '<h4>עוד</h4>' + extra.map(restHtml).join('');
   return h;
 }
+
+// ---------- "where we eat": chosen restaurant per meal, status, navigation ----------
+const slotOfItem = i => { const d = T.days.find(x => x.items.includes(i)); const s = d && (d.slots || []).find(s => s.id === (i.slot || i.id)); return s ? { d, s } : null; };
+const mealOpts = (d, s) => [...d.restaurants, ...(S.customRest[d.id] || [])].filter(r => r.slot === s.id);
+const navUrl = r => 'https://www.google.com/maps/dir/?api=1&hl=en&destination=' + encodeURIComponent(r.addr ? r.name + ', ' + r.addr : (r.maps || r.name));
+function mealCard(d, s) {
+  const opts = mealOpts(d, s), r = opts.find(x => x.id === pickOf(s.id));
+  if (!r) return `<div class="meal none"><div class="muted tiny">${esc(s.label)}</div><b>עוד לא בחרתם מסעדה</b> <span class="muted">· ${opts.length} אפשרויות למטה</span></div>`;
+  const others = opts.filter(x => x !== r && ['sent', 'booked'].includes(stOf(x)) && !vetoed(x));
+  return `<div class="meal"><div class="muted tiny">${esc(s.label)}</div>
+    <div class="rh"><b>${esc(r.name)}</b>${r.book ? statusBtn(r) : ''}</div>
+    ${r.rtime ? `<div class="tiny">🗓️ ${esc(r.rdate || '')} · <bdi dir="ltr">${esc(r.rtime)}</bdi>${r.party ? ' · ' + r.party + ' סועדים' : ''}</div>` : ''}
+    <div class="tiny muted">📍 ${r.addr ? esc(r.addr) : 'הניווט לפי שם המסעדה — ודאו במפה שזה המקום הנכון'}</div>
+    ${r.sentNote ? `<div class="tiny muted">✉️ ${esc(r.sentNote)}</div>` : ''}
+    <div class="actions"><a class="btn pri" target="_blank" rel="noopener" href="${navUrl(r)}">🧭 נווט ל-${esc(r.name.split(/[(—·]/)[0].trim())}</a>${r.phone ? `<a class="btn" href="tel:${esc(r.phone)}">📞 חייג</a>` : ''}<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(r.maps || r.name)}">🗺️ מפה</a></div>
+    ${others.length ? `<div class="warn">⚠️<span>שימו לב: סימנתם "${others.map(x => ST[stOf(x)][1]).join('/')}" גם ב-${others.map(x => esc(x.name)).join(', ')}, אבל נבחרה ${esc(r.name)}. ודאו לאן הולכים.</span></div>` : ''}</div>`;
+}
+const mealsHtml = d => (d.slots || []).length ? (d.slots || []).map(s => mealCard(d, s)).join('') : '';
+
 function viewDay(d) {
   const next = nowNext(d);
   const opens = allBookables().filter(b => b.day === d.id && stOf(b) === 'need' && !vetoed(b)).length, waits = allBookables().filter(b => b.day === d.id && stOf(b) === 'sent' && !vetoed(b)).length;
@@ -154,6 +173,7 @@ function viewDay(d) {
     <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
     ${d.lore ? `<details class="lore-d"><summary>📖 ${esc(d.lore.t)} — היסטוריה, פיקנטריה ועובדות</summary>${loreHtml(d)}</details>` : ''}`;
   if (d.flight) html += flightBox();
+  if ((d.slots || []).length) html += `<h3>🍽️ לאן אוכלים היום</h3>` + mealsHtml(d);
   html += `<h3>לוח זמנים</h3><div class="tl">` + d.items.map(i => itemHtml(i, next)).join('') + `</div>`;
   if (d.restaurants.length || (S.customRest[d.id] || []).length) html += `<h3>🍽️ אוכל היום — שתי אפשרויות לכל ארוחה</h3>` + restSection(d);
   html += `<h3>📝 הערות ליום</h3><textarea data-act="note" data-id="${d.id}" placeholder="מה קרה, מה לזכור, מה לשנות…">${esc(S.notes[d.id] || '')}</textarea>`;
@@ -182,9 +202,10 @@ const loreHtml = (x, withTitle) => {
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
   return `<details class="item ${next === i.id ? 'next' : ''} ${i.book ? 'b-' + stOf(i) : ''} ${vetoed(i) ? 'vetoed' : ''}" data-wiki="${esc((i.wiki || []).join('|'))}" data-q="${esc(i.maps || '')}" data-id="${i.id}" ${next === i.id ? 'open' : ''}>
-    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
+    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}${(() => { const m = slotOfItem(i); if (!m) return ''; const r = mealOpts(m.d, m.s).find(x => x.id === pickOf(m.s.id)); return r ? `<span class="msub">${r.book ? ({ need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' }[stOf(r)]) : ''} ${esc(r.name.split(/[(—·]/)[0].trim())}</span>` : '<span class="msub">בחרו מסעדה</span>'; })()}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
+      ${(() => { const m = slotOfItem(i); return m ? mealCard(m.d, m.s) : ''; })()}
       ${loreHtml(i)}
       ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
       ${galOk(i) ? `<div class="gal" data-gal></div><div class="tiny muted">תמונות מ-Wikipedia/Wikimedia לפי חיפוש — להמחשה בלבד · <a target="_blank" rel="noopener" href="${waUrl((i.maps || i.title) + ' Hungary')}">🔎 עוד בגוגל</a></div>` : ''}
@@ -210,7 +231,7 @@ function restHtml(r) {
 
 // ----- food view -----
 function viewFood() {
-  let h = `<h2>🍽️ כל המסעדות</h2><div class="legend"><span>🟥 צריך להזמין</span><span>🟩 הוזמן</span><span>⬜ לא נדרש</span></div>`;
+  let h = `<h2>🍽️ לאן אוכלים</h2>` + T.days.filter(d => (d.slots || []).length).map(d => `<h3>${d.dow} ${fmt(d.date)}</h3>` + mealsHtml(d)).join('') + `<h2 style="margin-top:2rem">כל האפשרויות</h2><div class="legend"><span>🟥 צריך להזמין</span><span>🟩 הוזמן</span><span>⬜ לא נדרש</span></div>`;
   T.days.forEach(d => {
     const rest = restOf(d);
     h += `<h3>${d.emoji} ${d.dow} ${fmt(d.date)} — ${esc(d.title)}</h3>` + (rest.length ? restSection(d) : '<p class="muted">אין מסעדות.</p>') +
@@ -674,7 +695,7 @@ document.addEventListener('click', e => {
   const a = t.dataset.act, id = t.dataset.id;
   if (a === 'tab') { S.tab = t.dataset.k; save(); render(); scrollTo(0, 0); }
   else if (a === 'day') { S.day = id; save(); render(); }
-  else if (a === 'cycle') { const x = allBookables().find(b => b.id === id); if (x) { S.status[id] = NEXT[stOf(x)]; save(); keepOpen(); } }
+  else if (a === 'cycle') { const x = allBookables().find(b => b.id === id); if (x) { S.status[id] = NEXT[stOf(x)]; if (x.slot && ['sent', 'booked'].includes(S.status[id]) && !pickOf(x.slot)) S.pick[x.slot] = x.id; save(); keepOpen(); } }
   else if (a === 'sy-enable') { t.disabled = true; t.textContent = 'מתחבר…'; enableSync().then(() => { render(); toast('סנכרון הופעל'); }).catch(() => { SY.url = ''; saveSy(); render(); alert('לא הצלחתי ליצור מסמך משותף. אפשר להשתמש בכתובת Firebase (ראו "יש לי כתובת").'); }); }
   else if (a === 'sy-share') { const l = shareLink(); if (navigator.share) navigator.share({ title: 'טיול הונגריה', url: l }).catch(() => { }); else (navigator.clipboard?.writeText(l) || Promise.reject()).then(() => toast('הקישור הועתק')).catch(() => prompt('העתיקו:', l)); }
   else if (a === 'sy-now') { syncNow().then(() => render()); }
