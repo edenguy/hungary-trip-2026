@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102124213';
+const BUILD = '20261102124532';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -167,7 +167,7 @@ function viewDay(d) {
   let html = dayChips(d);
   const idx = T.days.findIndex(x => x.id === d.id) + 1;
   html += `<section class="hero" data-hero="${esc(d.hero || '')}"><div class="hero-inner"><div class="eyebrow">יום ${idx} מתוך ${T.days.length} · ${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h1 class="hero-title">${esc(d.title)}</h1>
-    <div class="hero-pills"><span class="gp">🌇 שקיעה ${d.sunset}</span><span class="gp" id="wx-${d.id}">⛅ …</span>${opens ? `<span class="gp need">🟥 ${opens} לסגור</span>` : '<span class="gp done">🟩 הכל סגור</span>'}${waits ? `<span class="gp wait">🟧 ${waits} ממתינות לאישור</span>` : ''}</div></div></section>
+    <div class="hero-pills"><span class="gp">🌇 שקיעה ${d.sunset}</span><span class="gp" id="wx-${d.id}">⛅ …</span>${opens ? `<button class="gp need" data-act="tab" data-k="todo">🟥 ${opens} לסגור — מה?</button>` : '<span class="gp done">🟩 הכל סגור</span>'}${waits ? `<span class="gp wait">🟧 ${waits} ממתינות לאישור</span>` : ''}</div></div></section>
     <p class="lead">${esc(d.summary)}</p>
     ${d.note ? `<div class="warn">💡<span>${esc(d.note)}</span></div>` : ''}
     <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
@@ -202,7 +202,7 @@ const loreHtml = (x, withTitle) => {
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
   return `<details class="item ${next === i.id ? 'next' : ''} ${i.book ? 'b-' + stOf(i) : ''} ${vetoed(i) ? 'vetoed' : ''}" data-wiki="${esc((i.wiki || []).join('|'))}" data-q="${esc(i.maps || '')}" data-id="${i.id}" ${next === i.id ? 'open' : ''}>
-    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}${(() => { const m = slotOfItem(i); if (!m) return ''; const r = mealOpts(m.d, m.s).find(x => x.id === pickOf(m.s.id)); return r ? `<span class="msub">${r.book ? ({ need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' }[stOf(r)]) : ''} ${esc(r.name.split(/[(—·]/)[0].trim())}</span>` : '<span class="msub">בחרו מסעדה</span>'; })()}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? `<span class="dot">${ST[stOf(i)][0]}</span>` : ''}</summary>
+    <summary><span class="ic">${i.icon}</span><span class="tt"><small><bdi dir="ltr">${esc(i.time)}</bdi>${next === i.id ? ' · <b class="nowtag">הבא</b>' : ''}</small>${esc(i.title)}${(() => { const m = slotOfItem(i); if (!m) return ''; const r = mealOpts(m.d, m.s).find(x => x.id === pickOf(m.s.id)); return r ? `<span class="msub">${r.book ? ({ need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' }[stOf(r)]) : ''} ${esc(r.name.split(/[(—·]/)[0].trim())}</span>` : '<span class="msub">בחרו מסעדה</span>'; })()}</span>${vetoed(i) ? '<span class="dot">🚫</span>' : i.book ? (['need', 'sent'].includes(stOf(i)) ? `<span class="st st-${stOf(i)} sm">${ST[stOf(i)][0]} ${ST[stOf(i)][1]}</span>` : `<span class="dot">${ST[stOf(i)][0]}</span>`) : ''}</summary>
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
       ${(() => { const m = slotOfItem(i); return m ? mealCard(m.d, m.s) : ''; })()}

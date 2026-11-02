@@ -173,3 +173,6 @@ nav button.on .i{stroke-width:2}
 .meal.none{border-style:dashed;color:var(--mut)}
 .meal .rh b{font-size:17px}
 .msub{display:block;font-weight:500;font-size:13px;color:var(--accent);margin-top:2px}
+
+.st.sm{padding:2px 9px;font-size:11.5px;pointer-events:none;flex:none}
+button.gp{font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
