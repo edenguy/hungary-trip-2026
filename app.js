@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102142917';
+const BUILD = '20261102152820';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -553,7 +553,7 @@ async function loadHero() {
 // ---------- bookings summary (one place for everything reserved) ----------
 const AREA = { 'd1-lunch': 'Eger', 'd1-dinner': 'Eger', 'd2-lunch': 'Lillafüred', 'd2-dinner': 'Eger', 'd3-lunch': 'Noszvaj', 'd3-dinner': 'Eger', 'd4-lunch': 'Budapest', 'd4-dinner': 'Budapest' };
 const EN_DOW = { d1: 'Thu 12 Nov', d2: 'Fri 13 Nov', d3: 'Sat 14 Nov', d4: 'Sun 15 Nov', d5: 'Mon 16 Nov' };
-const EN_ITEM = { 'd1-car': 'Car pickup, Budapest Airport (BUD)', 'd1-checkin': 'Hotel: Imola Hotel Platán Adults Only, Eger (12–15 Nov)', 'd2-cave': 'Anna Cave, Lillafüred', 'd4-hotel': 'Hotel in Budapest (15–16 Nov)' };
+const EN_ITEM = { 'd1-car': 'Car pickup, Budapest Airport (BUD)', 'd1-checkin': 'Hotel: Imola Hotel Platán Adults Only, Eger (12–15 Nov)', 'd2-cave': 'Anna Cave, Lillafüred', 'd4-hotel': 'Hotel: Budapest Marriott Hotel (15–16 Nov)' };
 const SQ = { need: '🟥', sent: '🟧', booked: '🟩', na: '⬜' };
 function bookingRows() {
   const rows = [];

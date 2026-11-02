@@ -73,7 +73,7 @@ window.TRIP_MAP = {
   d4: {
     route: [
       { n: "Imola Hotel Platán", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
-      { n: "בודפשט — מרכז העיר (בזיליקה)", ll: [47.5008, 19.0539], q: "St. Stephen's Basilica Budapest" },
+      { n: "Budapest Marriott Hotel", ll: [47.4960, 19.0490], q: "Budapest Marriott Hotel Apáczai Csere János u. 4" },
     ],
     walk: {
       title: "סיור הליכה בבודפשט (פסט)", intro: "כ-2.5 שעות עם עצירות. הבזיליקה מוקדם בגלל הכיפה, אחר כך ירידה לדנובה, שוק הכריסמס ומופע האורות ב-17:30.",
@@ -98,7 +98,7 @@ window.TRIP_MAP = {
   },
   d5: {
     route: [
-      { n: "מלון בודפשט (מרכז)", ll: [47.4985, 19.0520], q: "Budapest city center" },
+      { n: "Budapest Marriott Hotel", ll: [47.4960, 19.0490], q: "Budapest Marriott Hotel Apáczai Csere János u. 4" },
       { n: "שדה התעופה — החזרת רכב", ll: [47.4369, 19.2556], q: "Budapest Airport car rental return" },
     ],
   },
