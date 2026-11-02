@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102125010';
+const BUILD = '20261102125855';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -206,6 +206,7 @@ function itemHtml(i, next) {
     <div class="det">
       ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
       ${(() => { const m = slotOfItem(i); return m ? mealCard(m.d, m.s) : ''; })()}
+      ${i.sentNote ? `<div class="hrs hrs-ok">🎟️<span>${esc(i.sentNote)}</span></div>` : ''}
       ${loreHtml(i)}
       ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
       ${galOk(i) ? `<div class="gal" data-gal></div><div class="tiny muted">תמונות מ-Wikipedia/Wikimedia לפי חיפוש — להמחשה בלבד · <a target="_blank" rel="noopener" href="${waUrl((i.maps || i.title) + ' Hungary')}">🔎 עוד בגוגל</a></div>` : ''}
@@ -501,7 +502,7 @@ async function markSaved(d) { for (const m of modesOf(d)) { const r = await idbG
 
 
 // ---------- icons: replace emoji with line icons (DOM-level, attribute-safe) ----------
-const EMO = { '✈': 'plane', '🛫': 'plane-takeoff', '🛬': 'plane-landing', '🚗': 'car', '📍': 'map-pin', '🍽': 'utensils', '🍴': 'utensils', '🏰': 'castle', '🏨': 'hotel', '♨': 'droplets', '🥐': 'croissant', '🌊': 'waves', '🕳': 'mountain', '🏘': 'house', '🏠': 'house', '🏡': 'house', '🚶': 'footprints', '⛽': 'fuel', '🧳': 'luggage', '🛂': 'id-card', '⛪': 'church', '✨': 'sparkles', '🎄': 'tree-pine', '🍷': 'wine', '🌅': 'sunset', '🌇': 'sunset', '🌲': 'trees', '🧖': 'bath', '☕': 'coffee', '🏛': 'landmark', '🗺': 'map', '🧭': 'navigation', '📷': 'camera', '🔎': 'search', '📞': 'phone', '✉': 'mail', '🌐': 'globe', 'ℹ': 'info', '🗓': 'calendar-days', '📅': 'calendar', '🕒': 'clock', '⏰': 'clock', '📜': 'scroll-text', '🌶': 'flame', '⚡': 'zap', '⚠': 'triangle-alert', '👍': 'thumbs-up', '🚫': 'ban', '✅': 'circle-check', '✔': 'check', '🔄': 'refresh-cw', '⟳': 'refresh-cw', '⬇': 'download', '📥': 'download', '📤': 'share-2', '🖼': 'image', '📝': 'pencil', '✏': 'pencil', '💡': 'lightbulb', '🎒': 'backpack', '⏳': 'hourglass', '🎉': 'party-popper', '⛅': 'cloud-sun', '☀': 'sun', '🌫': 'cloud-fog', '🌧': 'cloud-rain', '❄': 'snowflake', '🌦': 'cloud-sun-rain', '🍇': 'grape', '🥩': 'beef', '🔗': 'external-link', '💶': 'banknote', '🗣': 'languages', '📌': 'pin', '📋': 'clipboard-list', '💾': 'save', '🗳': 'check', '📖': 'scroll-text', '🔖': 'pin' };
+const EMO = { '✈': 'plane', '🛫': 'plane-takeoff', '🛬': 'plane-landing', '🚗': 'car', '📍': 'map-pin', '🍽': 'utensils', '🍴': 'utensils', '🏰': 'castle', '🏨': 'hotel', '♨': 'droplets', '🥐': 'croissant', '🌊': 'waves', '🕳': 'mountain', '🏘': 'house', '🏠': 'house', '🏡': 'house', '🚶': 'footprints', '⛽': 'fuel', '🧳': 'luggage', '🛂': 'id-card', '⛪': 'church', '✨': 'sparkles', '🎄': 'tree-pine', '🍷': 'wine', '🌅': 'sunset', '🌇': 'sunset', '🌲': 'trees', '🧖': 'bath', '☕': 'coffee', '🏛': 'landmark', '🗺': 'map', '🧭': 'navigation', '📷': 'camera', '🔎': 'search', '📞': 'phone', '✉': 'mail', '🌐': 'globe', 'ℹ': 'info', '🗓': 'calendar-days', '📅': 'calendar', '🕒': 'clock', '⏰': 'clock', '📜': 'scroll-text', '🌶': 'flame', '⚡': 'zap', '⚠': 'triangle-alert', '👍': 'thumbs-up', '🚫': 'ban', '✅': 'circle-check', '✔': 'check', '🔄': 'refresh-cw', '⟳': 'refresh-cw', '⬇': 'download', '📥': 'download', '📤': 'share-2', '🖼': 'image', '📝': 'pencil', '✏': 'pencil', '💡': 'lightbulb', '🎒': 'backpack', '⏳': 'hourglass', '🎉': 'party-popper', '⛅': 'cloud-sun', '☀': 'sun', '🌫': 'cloud-fog', '🌧': 'cloud-rain', '❄': 'snowflake', '🌦': 'cloud-sun-rain', '🍇': 'grape', '🥩': 'beef', '🔗': 'external-link', '💶': 'banknote', '🗣': 'languages', '📌': 'pin', '📋': 'clipboard-list', '💾': 'save', '🗳': 'check', '📖': 'scroll-text', '🔖': 'pin', '🎟': 'ticket' };
 const EMO_RE = /[\p{Extended_Pictographic}⟳]️?/gu, EMO_TEST = /[\p{Extended_Pictographic}⟳]/u, SVGNS = 'http://www.w3.org/2000/svg';
 function emoNode(ch) {
   const c = ch.replace(/️/g, '');
