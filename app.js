@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261102180717';
+const BUILD = '20261102181033';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -237,6 +237,7 @@ function viewFood() {
   let h = `<h2>🍲 פקל וחלקי פנים — איפה?</h2><div class="card">${pac.map(({ d, r }) => `<div class="rh"><div><b>${esc(r.name)}</b> ${dishBadge(r)}<div class="tiny muted">${d.dow} ${fmt(d.date)} · ${esc(r.rtime || '')}${r.addr ? ' · ' + esc(r.addr) : ''}</div><div class="tiny">${esc(r.dishNote || '')}</div></div>${r.book ? statusBtn(r) : ''}</div><div class="actions"><a class="btn pri" target="_blank" rel="noopener" href="${navUrl(r)}">🧭 נווט</a></div>`).join('')}
     <p class="tiny muted"><b>חלקי פנים (belsőség):</b> במסעדות שלכם לא מצאתי אף מקום שמאשר אותם בתפריט, ולכן לא סימנתי. לשאול בעת ההזמנה, או במקום: <b>Van pacalpörkölt?</b> (יש פקל?) · <b>Van máj / velő / vese?</b> (יש כבד / מח עצם / כליות?).</p>
     <p class="tiny muted">נבחרו אצלכם ולא אומת שיש בהם: ${other.map(({ r }) => esc(r.name.split(/[(—·]/)[0].trim())).join(' · ')}.</p></div>
+    <h2 style="margin-top:2rem">🔥 מנות מופרעות — איפה מזמינים</h2><p class="tiny muted">צהוב בוהק = יש אסמכתא שהמנה מוגשת שם (תפריטים משתנים — לאמת). בלי צבע = לא נמצא, ולכן מופיע המשפט לשאול בהונגרית.</p>` + wildHtml() + `
     <h2 style="margin-top:2rem">🍽️ לאן אוכלים</h2>` + T.days.filter(d => (d.slots || []).length).map(d => `<h3>${d.dow} ${fmt(d.date)}</h3>` + mealsHtml(d)).join('') + `<h2 style="margin-top:2rem">כל האפשרויות</h2><div class="legend"><span>🟥 צריך להזמין</span><span>🟩 הוזמן</span><span>⬜ לא נדרש</span></div>`;
   T.days.forEach(d => {
     const rest = restOf(d);
@@ -593,6 +594,20 @@ function summaryText(lang) {
     L.push('');
   });
   return L.join('\n').trim();
+}
+
+
+function wildHtml() {
+  const findR = id => { for (const d of T.days) { const r = d.restaurants.find(x => x.id === id); if (r) return { d, r }; } return null; };
+  const findI = id => { for (const d of T.days) { const i = d.items.find(x => x.id === id); if (i) return { d, i }; } return null; };
+  return (T.wild || []).map(w => {
+    const ok = (w.where || []).map(x => {
+      if (x.rid) { const f = findR(x.rid); if (!f) return ''; const chosen = f.r.slot && pickOf(f.r.slot) === f.r.id; return `<div class="wrow"><span class="glow">${esc(f.r.name.split(/[(—·]/)[0].trim())} · ${f.d.dow} ${fmt(f.d.date)}${f.r.rtime ? ' · <bdi dir="ltr">' + esc(f.r.rtime) + '</bdi>' : ''}</span><span class="tiny"> ${chosen ? ST[stOf(f.r)][0] + ' ' + ST[stOf(f.r)][1] : '<span class="muted">(לא נבחרה — אפשרות)</span>'}</span><div class="tiny muted">${esc(x.note || '')}</div></div>`; }
+      if (x.item) { const f = findI(x.item); if (!f) return ''; return `<div class="wrow"><span class="glow">${esc(x.label || f.i.title)} · ${f.d.dow} ${fmt(f.d.date)} · <bdi dir="ltr">${esc(f.i.time || '')}</bdi></span><div class="tiny muted">${esc(x.note || '')}</div></div>`; }
+      return '';
+    }).join('');
+    return `<div class="card slim wild"><div class="rh"><div><b>${esc(w.hu)}</b><div class="tiny muted">${esc(w.he)}</div></div></div>${ok || `<div class="tiny nowhere">לא אומת באף מסעדה שלכם — לשאול: <b>${esc(w.ask)}</b></div>`}${!ok && w.hint ? `<div class="tiny muted">${esc(w.hint)}</div>` : ''}${ok ? `<div class="tiny muted">לאמת בתפריט: <b>${esc(w.ask)}</b></div>` : ''}</div>`;
+  }).join('');
 }
 
 // ---------- weather ----------
