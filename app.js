@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261103141619';
+const BUILD = '20261103145608';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -194,11 +194,12 @@ function flightBox() {
 }
 const NOPIC = /^(d\d-(land|car|arrive|back|fuel|return|out|bf|drive|eve|lunch|dinner|free|fly|checkin-air))$/;
 const galOk = i => !NOPIC.test(i.id) && (i.wiki?.length || i.maps);
+const deepHtml = dp => dp && dp.length ? `<details class="deep"><summary>📖 העמק — הסיפור המלא</summary>${dp.map(s => `<h5>${esc(s.t)}</h5>` + s.p.map(p => `<p>${esc(p)}</p>`).join('')).join('')}<p class="tiny muted">מבוסס על חיפוש במקורות פתוחים (Wikipedia, אתרי תיירות ומוזיאונים). איפה שהמקורות חלוקים — כתוב.</p></details>` : '';
 const loreHtml = (x, withTitle) => {
   const L = x.lore; if (!L) return '';
   const ul = a => a && a.length ? `<ul class="ll">${a.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : '';
   const sec = (ic, t, body) => body ? `<div class="ls"><b>${ic} ${t}</b>${body}</div>` : '';
-  return `<div class="lore">${withTitle && L.t ? `<h4>${esc(L.t)}</h4>` : ''}${sec('📜', 'היסטוריה', L.h ? `<p>${esc(L.h)}</p>` : '')}${sec('🌶️', 'פיקנטריה', L.f ? `<p>${esc(L.f)}</p>` : '')}${sec('⚡', 'עובדות מהירות', ul(L.q))}${sec('⚠️', 'כדאי לדעת', ul(L.k))}${sec('🍴', 'מה להזמין', ul(L.o))}</div>`;
+  return `<div class="lore">${withTitle && L.t ? `<h4>${esc(L.t)}</h4>` : ''}${sec('📜', 'היסטוריה', L.h ? `<p>${esc(L.h)}</p>` : '')}${sec('🌶️', 'פיקנטריה', L.f ? `<p>${esc(L.f)}</p>` : '')}${sec('⚡', 'עובדות מהירות', ul(L.q))}${sec('⚠️', 'כדאי לדעת', ul(L.k))}${sec('🍴', 'מה להזמין', ul(L.o))}${deepHtml(L.dp)}</div>`;
 };
 function itemHtml(i, next) {
   const hasMore = i.desc || i.wiki?.length || i.maps || i.book;
@@ -280,6 +281,7 @@ function viewMore() {
     (S.expenses.map((e, i) => `<div class="exp"><span>${esc(e.what)}</span><b>${(+e.amt).toLocaleString('he-IL')} ${esc(e.cur || '')}</b><button class="x" data-act="delexp" data-id="${i}">✕</button></div>`).join('') || '<p class="muted">עוד אין הוצאות.</p>') +
     `</div><form data-act="addexp" class="row"><input name="what" placeholder="על מה" required><input name="amt" type="number" step="any" placeholder="סכום" required style="max-width:7rem"><select name="cur"><option>₪</option><option>€</option><option>HUF</option></select><button class="btn pri">הוסף</button></form>`;
   h += `<h3>ℹ️ מידע שימושי</h3><div class="card"><ul class="info">${T.info.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  h += `<h3>📚 תרבות האוכל ההונגרית — העמקה</h3><div class="card">${deepHtml(T.foodDeep)}</div>`;
   h += `<h3>🍽️ מילון אוכל הונגרי</h3><div class="card phrases">` + (T.food || []).map(p => `<div style="grid-template-columns:1fr 2fr"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('') + `</div>`;
   h += `<h3>🗣️ ביטויים בהונגרית</h3><div class="card phrases">` + T.phrases.map(p => `<div><span>${p[0]}</span><b>${p[1]}</b><small>${p[2]}</small></div>`).join('') + `</div>`;
   h += `<h3>💾 גיבוי ושחזור</h3><div class="card"><p class="tiny muted">הנתונים נשמרים בדפדפן במכשיר הזה בלבד. כדאי לייצא גיבוי מדי פעם, או לפני החלפת מכשיר.</p><div class="actions"><button class="btn" data-act="export">⬇️ ייצוא</button><label class="btn">⬆️ ייבוא<input type="file" id="imp" accept="application/json" hidden></label><button class="btn" data-act="names">✏️ שמות</button><button class="btn del" data-act="reset">איפוס</button></div></div>`;
@@ -434,7 +436,7 @@ async function walkMap(d, walk) {
   panel.innerHTML = `<h3>🚶 ${esc(walk.title)}</h3><p class="muted">${esc(walk.intro)}</p>
     <div class="card next-card"><div class="muted tiny">הנקודה הבאה · ${nextI + 1} מתוך ${st.length}${next.time ? ' · ' + esc(next.time) : ''}</div><h3 style="margin:.2rem 0">${esc(next.n)}</h3>
     <div class="tiny muted" id="wkinfo">${prev ? 'טוען מרחק מהנקודה הקודמת…' : 'נקודת ההתחלה של הסיור'}</div>
-    <p><b>📜 היסטוריה:</b> ${esc(next.story)}</p><p><b>🌶️ פיקנטריה:</b> ${esc(next.fun)}</p>
+    <p><b>📜 היסטוריה:</b> ${esc(next.story)}</p><p><b>🌶️ פיקנטריה:</b> ${esc(next.fun)}</p>${deepHtml(next.deep)}
     <div class="actions"><a class="btn" target="_blank" rel="noopener" href="${dirLink(next, 'walking')}">🧭 נווט בהליכה</a><a class="btn" target="_blank" rel="noopener" href="${mapsUrl(next.q || next.n)}">🗺️ מפה</a><button class="btn pri" data-act="visit" data-id="${next.id}" data-day="${d.id}">✅ הייתי</button></div></div>${list}`;
   if (prev) {
     const rt = await osrm('foot', [prev.ll, next.ll], false);
