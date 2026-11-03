@@ -1,4 +1,4 @@
-const C='hu-trip-20261102181033',F=['./','index.html','style.css','data.js','app.js','manifest.webmanifest','icon.svg','mapdata.js','vendor/leaflet.js','vendor/leaflet.css','icon-192.png','favicon-32.png'];
+const C='hu-trip-20261103112352',F=['./','index.html','style.css','data.js','app.js','manifest.webmanifest','icon.svg','mapdata.js','vendor/leaflet.js','vendor/leaflet.css','icon-192.png','favicon-32.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>clients.claim())));
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);
