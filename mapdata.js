@@ -31,6 +31,24 @@ window.TRIP_MAP = {
   d2: {
     route: [
       { n: "Imola Hotel Platán", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
+      { n: "Noszvaj — בתי המערות", ll: [47.9430, 20.4350], q: "Noszvaj cave dwellings" },
+      { n: "חזרה לאגר", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
+    ],
+    walk: {
+      title: "הליכה ב-Noszvaj", intro: "הליכה קצרה בכפר. אין סיור מאורגן — בעיקר נקודות אחרי בתי המערות.",
+      stops: [
+        { id: "w3-caves", n: "בתי המערות של Noszvaj", ll: [47.9430, 20.4350], q: "Noszvaj Barlanglakások", time: "30–45 דק׳",
+          story: "בתים חצובים בסלע טוף ('barlanglakás'), חלק ממשק החקלאי המסורתי של האזור. פתוח כל יום, בנובמבר כנראה עד 16:00.",
+          fun: "הטוף רך וקל לחציבה, ובתוך הבתים הטמפרטורה יציבה — כמעט חמימה בחורף." },
+        { id: "w3-castle", n: "טירת De la Motte", ll: [47.9460, 20.4400], q: "De la Motte Castle Noszvaj", time: "15 דק׳ (מבחוץ)",
+          story: "אחוזה בכפר Noszvaj שמזוהה עם משפחת De la Motte.",
+          fun: "לבדוק אם פתוח לביקור; אם לא — מבט מבחוץ." },
+      ],
+    },
+  },
+  d3: {
+    route: [
+      { n: "Imola Hotel Platán", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
       { n: "לילאפורד — אגם ומלון הארמון", ll: [48.0850, 20.6165], q: "Hotel Palota Lillafüred" },
       { n: "חזרה לאגר", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
     ],
@@ -46,24 +64,6 @@ window.TRIP_MAP = {
         { id: "w2-gardens", n: "הגנים התלויים והמפל", ll: [48.0845, 20.6150], q: "Függőkertek Lillafüred Szinva vízesés", time: "20 דק׳",
           story: "טרסות גן מתחת למלון עם מפל של כ-20 מטר — ממפלי ההונגרים המפורסמים, ומלאכותי למחצה.",
           fun: "בחורף המים עשויים להיות מעטים; המדרגות חלקות אחרי גשם." },
-      ],
-    },
-  },
-  d3: {
-    route: [
-      { n: "Imola Hotel Platán", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
-      { n: "Noszvaj — בתי המערות", ll: [47.9430, 20.4350], q: "Noszvaj cave dwellings" },
-      { n: "חזרה לאגר", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
-    ],
-    walk: {
-      title: "הליכה ב-Noszvaj", intro: "הליכה קצרה בכפר. אין סיור מאורגן — בעיקר נקודות אחרי בתי המערות.",
-      stops: [
-        { id: "w3-caves", n: "בתי המערות של Noszvaj", ll: [47.9430, 20.4350], q: "Noszvaj Barlanglakások", time: "30–45 דק׳",
-          story: "בתים חצובים בסלע טוף ('barlanglakás'), חלק ממשק החקלאי המסורתי של האזור. פתוח כל יום, בנובמבר כנראה עד 16:00.",
-          fun: "הטוף רך וקל לחציבה, ובתוך הבתים הטמפרטורה יציבה — כמעט חמימה בחורף." },
-        { id: "w3-castle", n: "טירת De la Motte", ll: [47.9460, 20.4400], q: "De la Motte Castle Noszvaj", time: "15 דק׳ (מבחוץ)",
-          story: "אחוזה בכפר Noszvaj שמזוהה עם משפחת De la Motte.",
-          fun: "לבדוק אם פתוח לביקור; אם לא — מבט מבחוץ." },
       ],
     },
   },
