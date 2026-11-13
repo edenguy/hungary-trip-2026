@@ -31,6 +31,7 @@ window.TRIP_MAP = {
   d2: {
     route: [
       { n: "Imola Hotel Platán", ll: [47.9005, 20.3750], q: "Imola Hotel Platán Adults Only Eger" },
+      { n: "Tesco Hipermarket, אגר (קניות)", ll: [47.9110, 20.3900], q: "Tesco Hipermarket Eger Rákóczi Ferenc utca 100" },
       { n: "בתי המערות של Noszvaj", ll: [47.9430, 20.4350], q: "Noszvaji Barlanglakások" },
       { n: "טירת De la Motte", ll: [47.9460, 20.4400], q: "De la Motte Castle Noszvaj" },
       { n: "Trakta by Nomád (אופציונלי)", ll: [47.9600, 20.4400], q: "Trakta by Nomád Noszvaj" },
@@ -41,6 +42,8 @@ window.TRIP_MAP = {
     walk: {
       title: "יום כפרי בגשם · Noszvaj", intro: "הסדר גמיש: אם יורד גשם חזק, מתחילים בטירה ובקפה ומשאירים את בתי המערות לרגע שהגשם פוסק. קואורדינטות משוערות — הניווט לפי שם.",
       stops: [
+        { id: "w3-shop", n: "Tesco Hipermarket, אגר (קניות)", ll: [47.9110, 20.3900], q: "Tesco Hipermarket Eger Rákóczi Ferenc utca 100", time: "30–35 דק׳",
+          story: "סופר גדול לקניית מטריות, מוצרי שיער וטיפוח. כתובת לא מאומתת.", fun: "קואורדינטות משוערות; הניווט לפי שם." },
         { id: "w3-caves", n: "בתי המערות של Noszvaj (תלוי מזג אוויר)", ll: [47.9430, 20.4350], q: "Noszvaji Barlanglakások", time: "45–60 דק׳",
           story: "בתים חצובים בסלע טוף ('barlanglakás'), חלק ממשק החקלאי המסורתי של האזור. שעות צפויות 10:00–16:00 — לא אומת.",
           fun: "הטוף רך וקל לחציבה, ובתוך הבתים הטמפרטורה יציבה — כמעט חמימה בחורף." },
