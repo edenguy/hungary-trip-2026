@@ -11,7 +11,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,"Heebo",sans-serif;padding:0 16px 40px}
 header{position:sticky;top:0;background:var(--bg);padding:14px 0 10px;border-bottom:1px solid var(--line);z-index:2}
 h1{font-size:20px;margin:0 0 4px}p{margin:0;color:var(--mut);font-size:14px}
-.grp{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin:12px 0}.imgs{display:flex;gap:6px;margin-bottom:8px}.imgs img{width:calc(33.3% - 4px);aspect-ratio:1;object-fit:cover;border-radius:12px;background:var(--line)}.grp h2{font-size:17px;margin:2px 0 4px}.grp p{color:var(--ink);font-size:15px;margin:0 0 10px}.grp button{width:100%}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin:12px 0}.imgs{display:flex;gap:6px;margin-bottom:8px}.imgs img{width:calc(33.3% - 4px);aspect-ratio:1;object-fit:cover;border-radius:12px;background:var(--line)}.grp h2{font-size:17px;margin:2px 0 4px}.grp p{color:var(--ink);font-size:15px;margin:0 0 10px}.line{display:flex;gap:10px;align-items:flex-start;margin:6px 0}.line>:first-child{flex:1;min-width:0}.line h2{margin:2px 0}.line p{margin:0}
 .row img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none;background:var(--line)}
 .t{color:var(--mut);font-size:12px;direction:ltr;text-align:right}
 .c{flex:1;min-width:0}.c b{display:block;font-weight:600}
@@ -35,13 +35,13 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 const rng = r => r.map(([a, b]) => a === b ? `${a + 1}` : `${a + 1}–${b + 1}`).join(', ');
 list.innerHTML = G.map((g, k) => {
   const first = g.r[0][0], idxs = [first, Math.min(first + 1, g.r[0][1]), g.r[0][1]].filter((v, i, a) => a.indexOf(v) === i);
-  return `<div class="grp"><div class="imgs">${idxs.map(i => `<img loading="lazy" alt="" src="${A.urls[i]}=w200-h200-c" onerror="this.style.visibility='hidden'">`).join('')}</div><div class="c"><div class="t">תמונות ${rng(g.r)} · ${A.times[first]}</div><h2>${esc(g.n)}</h2><p>${esc(g.t)}</p></div><button data-k="${k}">העתק</button></div>`;
+  return `<div class="grp"><div class="imgs">${idxs.map(i => `<img loading="lazy" alt="" src="${A.urls[i]}=w200-h200-c" onerror="this.style.visibility='hidden'">`).join('')}</div><div class="c"><div class="t">תמונות ${rng(g.r)} · ${A.times[first]}</div><div class="line"><h2>${esc(g.n)}</h2><button data-k="${k}" data-f="n">העתק</button></div><div class="line"><p>${esc(g.t)}</p><button data-k="${k}" data-f="t">העתק</button></div></div></div>`;
 }).join('');
 const copy = async (text, btn, label) => {
   try { await navigator.clipboard.writeText(text); } catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
   btn.textContent = 'הועתק ✓'; setTimeout(() => { btn.textContent = label; }, 1200);
 };
-list.addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (b) copy(G[+b.dataset.k].t, b, 'העתק'); });
+list.addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (b) copy(G[+b.dataset.k][b.dataset.f], b, 'העתק'); });
 document.getElementById('all').addEventListener('click', e => copy(G.map(g => `${g.n} (תמונות ${rng(g.r)})\n${g.t}`).join('\n\n'), e.target, 'העתק הכל'));
 </script>
 </body>
