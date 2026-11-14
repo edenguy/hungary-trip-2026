@@ -118,24 +118,24 @@ window.TRIP_MAP = {
 
 // ---------- our own photos (from the trip album) ----------
 window.TRIP_PHOTOS = {
-  d1: { hero: 'photos/d1-017.jpg', pos: '50% 20%', items: [
-    { f: 'photos/d1-002.jpg', c: 'בדרך לטירת אגר' }, { f: 'photos/d1-009.jpg', c: 'ענת בשער הטירה' },
-    { f: 'photos/d1-011.jpg', c: 'גיא ליד הצלב בטירה' }, { f: 'photos/d1-014.jpg', c: 'כניסה מקושטת לחג בעיר העתיקה' },
-    { f: 'photos/d1-017.jpg', c: 'הכנסייה ליד הגשר' }, { f: 'photos/d1-019.jpg', c: 'בתוך הכנסייה' },
-    { f: 'photos/d1-021.jpg', c: 'חזית הכנסייה' }, { f: 'photos/d1-022.jpg', c: 'רחוב הולכי רגל אחרי גשם' },
-    { f: 'photos/d1-025.jpg', c: 'עלי גינקו על המדרכה' } ] },
-  d2: { hero: 'photos/d2-044.jpg', pos: '50% 60%', items: [
-    { f: 'photos/d2-027.jpg', c: 'ענת וגיא בלובי המלון' }, { f: 'photos/d2-031.jpg', c: 'ענת בטירת De la Motte' },
-    { f: 'photos/d2-033.jpg', c: 'שמלת נשפים בתערוכה בטירה' }, { f: 'photos/d2-032.jpg', c: 'גרם המדרגות בטירה' },
-    { f: 'photos/d2-038.jpg', c: 'בפארק הטירה' }, { f: 'photos/d2-044.jpg', c: 'שטיח עלים צהוב' },
-    { f: 'photos/d2-052.jpg', c: 'גיא בשיחים האדומים' }, { f: 'photos/d2-060.jpg', c: 'ענת עם מטרייה בבתי המערות' },
-    { f: 'photos/d2-064.jpg', c: 'מנהרה חצובה בטוף' }, { f: 'photos/d2-067.jpg', c: 'בתוך בית מערה' },
-    { f: 'photos/d2-072.jpg', c: 'קפה וצלחת גבינות ונקניקים' }, { f: 'photos/d2-081.jpg', c: 'גיא על המזח, אגם קטן' },
-    { f: 'photos/d2-085.jpg', c: 'ערבה בוכייה על האגם' } ] },
-  d3: { hero: 'photos/d3-121.jpg', pos: '50% 26%', items: [
-    { f: 'photos/d3-090.jpg', c: 'מלון הארמון של לילאפורד' }, { f: 'photos/d3-093.jpg', c: 'שער אבן ומגדל בדרך לאגם' },
-    { f: 'photos/d3-099.jpg', c: 'ענת בכניסה לרציף הסירות' }, { f: 'photos/d3-104.jpg', c: 'ענת ליד חומת האגם' },
-    { f: 'photos/d3-105.jpg', c: 'ענת וגיא על שביל האגם' }, { f: 'photos/d3-112.jpg', c: 'סלפי בהליכה' },
-    { f: 'photos/d3-114.jpg', c: 'גיא מרים ידיים' }, { f: 'photos/d3-116.jpg', c: 'השתקפות הצוק במים' },
-    { f: 'photos/d3-121.jpg', c: 'הארמון מעבר לאגם' }, { f: 'photos/d3-122.jpg', c: 'ענת וגיא' } ] },
+  d1: { hero: 'https://lh3.googleusercontent.com/pw/AP1GczOHzGbFXIaKg2B8yGGXZoRhX8IgS62dxUglJQQNyb-6KktQPAz0QacSEPJ1nhSGB94lURTJSaeJVNY208lyd9J8OMtlyQUX3tGudtF7IaUrNFeCFz3X', pos: '50% 20%', items: [
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczPHiIs9e1X3fdG0UG_hOwVtqdxE-Sqvdt4UvH5rts7hZbLzGSeHjxOllx8ltteoQWowtcJVfsYfdnlW803Fqd2gKl0-GCgtbLqnap2Y-Yw961xHmeGC', c: 'בדרך לטירת אגר' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczOncCv5DeYkbiTSToE8vsu0p43eZNRs8oZPJOWaynQb7N7AkhZoiCb-khhDKMW3jDMDyrHH3oqoKFicSyTwxN3-rZAo5iYa3ztAPeGuIn6a3xGkQhvf', c: 'ענת בשער הטירה' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczOJVXN5pg-o8oMv84wCnc9Nf2ds0eCPkS3AyNOVPG3yyBNcJTcAaTEAq-AKR5OHGzl9y3Xf3pWGi_3GhVPJtvYHaVDTlTMQ9ScT4nB19vfs-u3aFXSJ', c: 'גיא ליד הצלב בטירה' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczM3daJG8IpjC7aHLYsnLX4sw3HAYdjGWoZxVrhmI8r2PxUwnlmp4PTI_C-hHY-vA65QX7DoCKt3Viv1ZTHReQLWeJTRf24MLIOSjhZDF1e1joKmIosx', c: 'כניסה מקושטת לחג בעיר העתיקה' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczOHzGbFXIaKg2B8yGGXZoRhX8IgS62dxUglJQQNyb-6KktQPAz0QacSEPJ1nhSGB94lURTJSaeJVNY208lyd9J8OMtlyQUX3tGudtF7IaUrNFeCFz3X', c: 'הכנסייה ליד הגשר' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczP-WEk7oRsbVF0I2bXMKdn5MT2vSgh__yOSZ8pzq1jq59MHeIeaJV97mBbnlGAH1F7UeFBg5YrVPP7N4giH7SPrNE2HotKcR7CyqZp3FV3qmM-o2uIi', c: 'בתוך הכנסייה' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczOJsyzk5EdgN9wpIzsR0YzmxAlXGdjVdOktCFQgW60fDj7ChjrXAw-4-FC4DpqWK-bhAXWNAmBvcCL-tUD9Znv1gs7tGNvDGxXRLwO7b6QhQvHcrcJ5', c: 'חזית הכנסייה' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczN1HpFb_yfsAJ7lOqQJT4pu8E2E7Z2EvDX4x7ZUD7YAyao9eyTE4M_TFQsyeOCBspa7fIt4H0kwbxajcikJoVlM2AE_K_rH0QI8dA6laFxHGXAjYvRY', c: 'רחוב הולכי רגל אחרי גשם' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczOWaFVF-U7xH67ILfBYK5WHfuZVog5q5R-5w5ldcil4HhSo6IfuY80GkrcsvUoXiXSXJUQLnx22Ohd7bR38mj_oYyV61AHmuBKWoz2DoAA9K6ngJhQB', c: 'עלי גינקו על המדרכה' } ] },
+  d2: { hero: 'https://lh3.googleusercontent.com/pw/AP1GczMnGHF-giV9CuoczbhqJH7QuKouuf61pLleVRsnyG3BYD6a8iL7LWG4B-jpswFO9qxxXBXjIxoTPOnbQnjH7ABULGwbrA0qHp2IB7qy2ESpAIcL-7Pn', pos: '50% 60%', items: [
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczPmwPNPyYBPhZpFzHqQvXp__aoQThX52QGn-AfROMFgsI6KkT3N4gYS1fTzTQHc85ND1NbbUv65ALuYXx0tLLusHia9RjXta3bvjEG9OXrnP30qM0k2', c: 'ענת וגיא בלובי המלון' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczNryrd7aLVOMPUBJQwO7z_f74dEI8FvF_U3F45569ilmlyiNgWmQ-JsALaV47ydQUlMfUD1j2nG_oC8md_J6evo-egqo2C0RQA2NlTRYNhYUce4Xi_p', c: 'ענת בטירת De la Motte' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczNkZMTywmFY6Zfx3oIXIz9vPXzQElxqQXGh7d-7DGmzu6XSoot2Cq5C9tSfWi-ou3VeqhdN8JcsrVK_LVtVt3x6Brk6dPmEZizzTm6bdBGPV85of2mT', c: 'שמלת נשפים בתערוכה בטירה' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczOMkTOxH6SYqJYH_NzDDq7QYdl38SdvsVgfouAaFQXCtK-TYg67aI1K5gTQn8pJzrIJ21NoDRe4EtdQgmX8E1NbdxzgddP96qbjeNmzrCXWWGUfd_mZ', c: 'גרם המדרגות בטירה' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczNmsmcddmwkdQl1pwEUVQ8KvISEZ15fwGTaXMwPtJHLgO836AE984D6fU4DaNQcSZuFno5VoEJm-QbMzFfPCZTOfr2PgR5STnpafwYMrwj8KoieeWuB', c: 'בפארק הטירה' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczMnGHF-giV9CuoczbhqJH7QuKouuf61pLleVRsnyG3BYD6a8iL7LWG4B-jpswFO9qxxXBXjIxoTPOnbQnjH7ABULGwbrA0qHp2IB7qy2ESpAIcL-7Pn', c: 'שטיח עלים צהוב' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczPTyD7OP91Rc6MZN5Jqd1RjeB29efcZYAFyQSFKf9HNHybGg0-X33CLeOTCNTDHeACUTl8tic3KwNE23N3eMSOkL2x1cl8p-EZ9mENpRtJg7J7JHtP9', c: 'גיא בשיחים האדומים' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczPFmrbBvjpa9KLIADKYL7rEvcWbUXHYnW82U0MBiDV88Tjn5AWisdZyRvYXO5i__rXBZBaeFV3bjFaY2vIbE32RjnhfEHrVUSGxzZlJc5us_cnrrB7-', c: 'ענת עם מטרייה בבתי המערות' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczOuX1-arNGMjBBz1MZqn-uGEsAJ-9PER5ZTlFMKiXUf5-HYHH17rrWOU1FoGjfq6MZlZ48v05b9tixC9zNv2adWyl8KB5EVzCzTP7gRzEEFrQPgw5E7', c: 'מנהרה חצובה בטוף' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczOzivX7W0cITT6lMDlDKWpqIfWi_IIIBz6kempN5ziR3dx-tAUpcC1RC214hZVgpyph9qTd-B0SLMeq-JjS4HY5iz_dH4R51MqjZQWLaj7Pk1qu1phA', c: 'בתוך בית מערה' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczObe7yLGLctoKMIzCghcy82NgVf73CZ0wggsxR5qp3xUDusESLTJmdBlPun5L75zi1yBk_4j7OY1mbCX_75GI_Xa9ph3lFXs8gDRP-FCuJ1nf1V_fmE', c: 'קפה וצלחת גבינות ונקניקים' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczP1x7CqbmU7PeRnZK8HiyZ4IAaYsT8lE6hzFwy9M91U3Y4nIPiRNfHB6lrtM1GEkQmsWCBgxlxb8_mab8ONqlEuxNDQ3UOE1xfJf5PjZj7I7DhHSDEo', c: 'גיא על המזח, אגם קטן' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczNAQDpu9ToZgKVoqhJ_1XPJ9VKaEujgYjJezSQe3C9PI_mqevFsCU5ZN5wj-ir1p5nUWggWatrJH9Tj5z_PohuJ_itBxEtVzaniViPzBSaCoiVcWxXq', c: 'ערבה בוכייה על האגם' } ] },
+  d3: { hero: 'https://lh3.googleusercontent.com/pw/AP1GczPKdAHXQCvyD42kjS6KaKGSbPS3UmjjuOm0HtXPmn2_2oaaOm1B81HgndlVT5hsd_LiMuYblUCSkZzkFXIy-fJuYf024L0C4Ya7gsP4_0kuBbfw3n2k', pos: '50% 26%', items: [
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczO5ROIvUJWIO26Ly1m7J4EpKaqyZEzjA5ZWa6R5arTOzBK7ZVR6SDQUjOw26d5vVGfmmKu-y1USz8DBffEW9fVs_W4l4tHcSJ8cjGUZqk-9ty3CIwh_', c: 'מלון הארמון של לילאפורד' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczMtEc8dIHdGdOLb-iBu8AhzuaHGuXZcqSMxhbmlGWa4Do9PhYKy5i-KuSKqVfxlETKeNTPQekWPj5ld-uSWv-nBrHekBe5PSZMyyfqqe2_K9qRrjRLi', c: 'שער אבן ומגדל בדרך לאגם' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczOZu0R1B7OwnyEXIeS3G8-TA-l3DlMQJNdGdPg6u1cmo1N4Ci91HWzyI2t6RCc-TcUZb_5hEbr5sVTgfWyruH-qSKYeoB09O4JhS6eQZJ2e2eeJvFFO', c: 'ענת בכניסה לרציף הסירות' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczMzogiW67URUHIcD9274PPEWpNWVb_nuJC4FXq8mXNQG3a3vQluTfeCoQ_bQlPYNmXq2Q2oOh3a3R439l_DssMqJTtNIzebz8qoEjJj1eUHGPrUTKp-', c: 'ענת ליד חומת האגם' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczMO6EGgzQjgEXpk8wRZ-4O0cs3TYSPkmQqNCWT3xBWophwvW4lAkSEKyWlp2VVPIcQtvlYoeKTbk2bX0wUhtX7Zq49_yUGhW6Awp5Ezpzor9kzbgg3n', c: 'ענת וגיא על שביל האגם' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczOUGBe-XJb1yHNe5a7_QI9XDKG3XGMhU4EszqA_ICuWk1ygO91w6YHgKn1x9VPw5WqTrSMk8NfhT54AcXe_aFEPsDhTr8nA9Bmd6FiZ2XUV8bhcmcXs', c: 'סלפי בהליכה' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczO5xgTN0Y6VUk-beerBKDAAc9DhraCYf2pi1keaXfchFWK_Ezb1kqJnQHALD89uv3WUOnJlxkiuEpw9Zo9RWXZuMS_LYN2rlvnb_F8PBD6KA9iOuEn6', c: 'גיא מרים ידיים' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczO9a4oCOVuiC8t_TM1VwcYlZGi8vbNDAJP5b5TUbhWI0DlrSdv3W_JIX61mQTK8dGul5VcW39xHkKmJYgEahHkdrSNKmgRKrgQcmCnHFc5HBWToXW7N', c: 'השתקפות הצוק במים' },
+    { f: 'https://lh3.googleusercontent.com/pw/AP1GczPKdAHXQCvyD42kjS6KaKGSbPS3UmjjuOm0HtXPmn2_2oaaOm1B81HgndlVT5hsd_LiMuYblUCSkZzkFXIy-fJuYf024L0C4Ya7gsP4_0kuBbfw3n2k', c: 'הארמון מעבר לאגם' }, { f: 'https://lh3.googleusercontent.com/pw/AP1GczMbOeWKEGBOA0OpafISe73JljvQAzgFIw2m5bdD5hMrJke7_dJ_M_XLU9083qg6H6lWS_TcWERq4UWUZu7mir6hYAT__Ln3sGuXa102X4h9mIPO5PH2', c: 'ענת וגיא' } ] },
 };

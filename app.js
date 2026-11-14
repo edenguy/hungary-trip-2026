@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261114151235';
+const BUILD = '20261114161939';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -336,11 +336,11 @@ async function fillGal(g, titles, q, gq) {
 }
 function ownGal(d) {
   const P = (window.TRIP_PHOTOS || {})[d.id]; if (!P || !P.items || !P.items.length) return '';
-  return `<section class="own"><h3>📸 התמונות שלנו</h3><div class="gal">${P.items.map((p, i) => `<img src="${p.f}" alt="${esc(p.c)}" loading="lazy" data-act="ownimg" data-d="${d.id}" data-i="${i}">`).join('')}</div></section>`;
+  return `<section class="own"><h3>📸 התמונות שלנו</h3><div class="gal">${P.items.map((p, i) => `<img src="${phUrl(p.f, 500)}" alt="${esc(p.c)}" loading="lazy" onerror="this.remove()" data-act="ownimg" data-d="${d.id}" data-i="${i}">`).join('')}</div></section>`;
 }
 function showOwn(d, i) {
   const P = (window.TRIP_PHOTOS || {})[d]; if (!P) return; const n = P.items.length; i = (i + n) % n; const p = P.items[i];
-  openViewer(`<div class="vbar"><b>${esc(p.c)} · ${i + 1}/${n}</b><span><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i + 1}">›</button><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${p.f}" alt="${esc(p.c)}"></div>`);
+  openViewer(`<div class="vbar"><b>${esc(p.c)} · ${i + 1}/${n}</b><span><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i + 1}">›</button><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${phUrl(p.f, 1200)}" alt="${esc(p.c)}"></div>`);
 }
 function wireGallery() {
   document.querySelectorAll('details.item').forEach(el => {
@@ -557,10 +557,11 @@ async function heroImg(title) {
   } catch { return ''; }
 }
 const tryImg = u => new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u; });
+const phUrl = (u, w) => /googleusercontent\.com/.test(u) ? `${u}=w${w}` : u;
 async function loadHero() {
   const el = document.querySelector('.hero[data-hero]'); if (!el) return;
   const mine = (window.TRIP_PHOTOS || {})[el.dataset.day];
-  if (mine && mine.hero) { el.style.backgroundImage = `url("${mine.hero}")`; el.style.backgroundPosition = mine.pos || 'center'; return; }
+  if (mine && mine.hero) { const u = phUrl(mine.hero, 1000); if (await tryImg(u)) { if (document.body.contains(el)) { el.style.backgroundImage = `url("${u}")`; el.style.backgroundPosition = mine.pos || 'center'; } return; } }
   if (!el.dataset.hero) return;
   for (const title of el.dataset.hero.split('|')) {
     const u = await heroImg(title);
