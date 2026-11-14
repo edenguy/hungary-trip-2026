@@ -115,3 +115,27 @@ window.TRIP_MAP = {
     ],
   },
 };
+
+// ---------- our own photos (from the trip album) ----------
+window.TRIP_PHOTOS = {
+  d1: { hero: 'photos/d1-017.jpg', pos: '50% 20%', items: [
+    { f: 'photos/d1-002.jpg', c: 'בדרך לטירת אגר' }, { f: 'photos/d1-009.jpg', c: 'ענת בשער הטירה' },
+    { f: 'photos/d1-011.jpg', c: 'גיא ליד הצלב בטירה' }, { f: 'photos/d1-014.jpg', c: 'כניסה מקושטת לחג בעיר העתיקה' },
+    { f: 'photos/d1-017.jpg', c: 'הכנסייה ליד הגשר' }, { f: 'photos/d1-019.jpg', c: 'בתוך הכנסייה' },
+    { f: 'photos/d1-021.jpg', c: 'חזית הכנסייה' }, { f: 'photos/d1-022.jpg', c: 'רחוב הולכי רגל אחרי גשם' },
+    { f: 'photos/d1-025.jpg', c: 'עלי גינקו על המדרכה' } ] },
+  d2: { hero: 'photos/d2-044.jpg', pos: '50% 60%', items: [
+    { f: 'photos/d2-027.jpg', c: 'ענת וגיא בלובי המלון' }, { f: 'photos/d2-031.jpg', c: 'ענת בטירת De la Motte' },
+    { f: 'photos/d2-033.jpg', c: 'שמלת נשפים בתערוכה בטירה' }, { f: 'photos/d2-032.jpg', c: 'גרם המדרגות בטירה' },
+    { f: 'photos/d2-038.jpg', c: 'בפארק הטירה' }, { f: 'photos/d2-044.jpg', c: 'שטיח עלים צהוב' },
+    { f: 'photos/d2-052.jpg', c: 'גיא בשיחים האדומים' }, { f: 'photos/d2-060.jpg', c: 'ענת עם מטרייה בבתי המערות' },
+    { f: 'photos/d2-064.jpg', c: 'מנהרה חצובה בטוף' }, { f: 'photos/d2-067.jpg', c: 'בתוך בית מערה' },
+    { f: 'photos/d2-072.jpg', c: 'קפה וצלחת גבינות ונקניקים' }, { f: 'photos/d2-081.jpg', c: 'גיא על המזח, אגם קטן' },
+    { f: 'photos/d2-085.jpg', c: 'ערבה בוכייה על האגם' } ] },
+  d3: { hero: 'photos/d3-121.jpg', pos: '50% 26%', items: [
+    { f: 'photos/d3-090.jpg', c: 'מלון הארמון של לילאפורד' }, { f: 'photos/d3-093.jpg', c: 'שער אבן ומגדל בדרך לאגם' },
+    { f: 'photos/d3-099.jpg', c: 'ענת בכניסה לרציף הסירות' }, { f: 'photos/d3-104.jpg', c: 'ענת ליד חומת האגם' },
+    { f: 'photos/d3-105.jpg', c: 'ענת וגיא על שביל האגם' }, { f: 'photos/d3-112.jpg', c: 'סלפי בהליכה' },
+    { f: 'photos/d3-114.jpg', c: 'גיא מרים ידיים' }, { f: 'photos/d3-116.jpg', c: 'השתקפות הצוק במים' },
+    { f: 'photos/d3-121.jpg', c: 'הארמון מעבר לאגם' }, { f: 'photos/d3-122.jpg', c: 'ענת וגיא' } ] },
+};

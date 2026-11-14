@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261113184752';
+const BUILD = '20261114150919';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -167,10 +167,11 @@ function viewDay(d) {
   const opens = allBookables().filter(b => b.day === d.id && stOf(b) === 'need' && !vetoed(b)).length, waits = allBookables().filter(b => b.day === d.id && stOf(b) === 'sent' && !vetoed(b)).length;
   let html = dayChips(d);
   const idx = T.days.findIndex(x => x.id === d.id) + 1;
-  html += `<section class="hero" data-hero="${esc(d.hero || '')}"><div class="hero-inner"><div class="eyebrow">יום ${idx} מתוך ${T.days.length} · ${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h1 class="hero-title">${esc(d.title)}</h1>
+  html += `<section class="hero" data-day="${d.id}" data-hero="${esc(d.hero || '')}"><div class="hero-inner"><div class="eyebrow">יום ${idx} מתוך ${T.days.length} · ${d.dow} ${fmt(d.date)} · ${whenLabel(d)}</div><h1 class="hero-title">${esc(d.title)}</h1>
     <div class="hero-pills"><span class="gp">🌇 שקיעה ${d.sunset}</span><span class="gp" id="wx-${d.id}">⛅ …</span>${opens ? `<button class="gp need" data-act="tab" data-k="todo">🟥 ${opens} לסגור — מה?</button>` : '<span class="gp done">🟩 הכל סגור</span>'}${waits ? `<span class="gp wait">🟧 ${waits} ממתינות לאישור</span>` : ''}</div></div></section>
     <p class="lead">${esc(d.summary)}</p>
     ${d.note ? `<div class="warn">💡<span>${esc(d.note)}</span></div>` : ''}
+    ${ownGal(d)}
     <div class="actions"><button class="btn pri" data-act="tab" data-k="map">🗺️ מפה ומסלול היום</button></div>
     ${d.lore ? `<details class="lore-d"><summary>📖 ${esc(d.lore.t)} — היסטוריה, פיקנטריה ועובדות</summary>${loreHtml(d)}</details>` : ''}`;
   if (d.flight) html += flightBox();
@@ -332,6 +333,14 @@ async function fillGal(g, titles, q, gq) {
   let imgs = (await Promise.all(titles.map(wikiImgs))).flat().slice(0, 8);
   if (!imgs.length && q) imgs = await commonsImgs(q);
   g.innerHTML = imgs.length ? imgs.map(m => `<a href="${esc(m.page)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(m.u)}" alt="${esc(m.c)}"></a>`).join('') + `<a class="btn more" target="_blank" rel="noopener" href="${waUrl(gq)}">עוד ›</a>` : `<a class="btn" target="_blank" rel="noopener" href="${waUrl(gq)}">📷 לא נמצאו תמונות כאן — חיפוש בגוגל</a>`;
+}
+function ownGal(d) {
+  const P = (window.TRIP_PHOTOS || {})[d.id]; if (!P || !P.items || !P.items.length) return '';
+  return `<section class="own"><h3>📸 התמונות שלנו</h3><div class="gal">${P.items.map((p, i) => `<img src="${p.f}" alt="${esc(p.c)}" loading="lazy" data-act="ownimg" data-d="${d.id}" data-i="${i}">`).join('')}</div></section>`;
+}
+function showOwn(d, i) {
+  const P = (window.TRIP_PHOTOS || {})[d]; if (!P) return; const n = P.items.length; i = (i + n) % n; const p = P.items[i];
+  openViewer(`<div class="vbar"><b>${esc(p.c)} · ${i + 1}/${n}</b><span><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i + 1}">›</button><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${p.f}" alt="${esc(p.c)}"></div>`);
 }
 function wireGallery() {
   document.querySelectorAll('details.item').forEach(el => {
@@ -549,7 +558,10 @@ async function heroImg(title) {
 }
 const tryImg = u => new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u; });
 async function loadHero() {
-  const el = document.querySelector('.hero[data-hero]'); if (!el || !el.dataset.hero) return;
+  const el = document.querySelector('.hero[data-hero]'); if (!el) return;
+  const mine = (window.TRIP_PHOTOS || {})[el.dataset.day];
+  if (mine && mine.hero) { el.style.backgroundImage = `url("${mine.hero}")`; el.style.backgroundPosition = mine.pos || 'center'; return; }
+  if (!el.dataset.hero) return;
   for (const title of el.dataset.hero.split('|')) {
     const u = await heroImg(title);
     if (u && await tryImg(u)) { if (document.body.contains(el)) el.style.backgroundImage = `url("${u}")`; return; }
@@ -766,6 +778,7 @@ document.addEventListener('click', e => {
   else if (a === 'sy-off') { if (confirm('לנתק את הסנכרון? הנתונים נשארים במכשיר.')) { SY.url = ''; SY.meta = {}; SY.last = {}; saveSy(); render(); } }
   else if (a === 'mapimg') { showMapImg(T.days.find(x => x.id === t.dataset.day), t.dataset.m); }
   else if (a === 'mapall') { t.disabled = true; saveAllMaps(t).then(() => { t.disabled = false; render(); }); }
+  else if (a === 'ownimg') showOwn(t.dataset.d, +t.dataset.i);
   else if (a === 'vclose') { const v = $('#viewer'); if (v) v.hidden = true; if (S.tab === 'map') markSaved(focusDay()); }
   else if (a === 'vrefresh') { showMapImg(T.days.find(x => x.id === t.dataset.day), t.dataset.m, true); }
   else if (a === 'vshare') { const dd = T.days.find(x => x.id === t.dataset.day); idbGet(dd.id + '-' + t.dataset.m).then(r => { const f = new File([r.blob], `hungary-${dd.id}.png`, { type: 'image/png' }); if (navigator.canShare?.({ files: [f] })) navigator.share({ files: [f] }).catch(() => { }); else toast('השיתוף לא נתמך — השתמשו ב"שמור"'); }); }
