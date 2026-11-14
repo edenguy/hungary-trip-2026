@@ -1,13 +1,12 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261114164855';
+const BUILD = '20261114172338';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
 const HU_SITE = /(kodmoncsarda\.hu|programturizmus\.hu|szallas\.hu)/;
 const enUrl = u => HU_SITE.test(u) ? 'https://translate.google.com/translate?sl=hu&tl=en&u=' + encodeURIComponent(u) : u;
-const waUrl = q => 'https://www.google.com/search?tbm=isch&hl=en&q=' + encodeURIComponent(q);
 
 // ---------- state ----------
 let S;
@@ -104,7 +103,7 @@ function render() {
   $('#nav').innerHTML = tabs.map(([k, i, l]) => `<button class="${S.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}"><svg class="i"><use href="#i-${i}"/></svg>${l}</button>`).join('');
   const v = { day: viewDay, map: viewMap, food: viewFood, todo: viewTodo, more: viewMore }[S.tab];
   $('#app').innerHTML = v(d);
-  if (S.tab === 'day') { wireGallery(); loadHero(); }
+  if (S.tab === 'day') { loadHero(); }
   if (S.tab === 'map') { initMap(d); markSaved(d); } else destroyMap();
 }
 function countdown() {
@@ -194,7 +193,6 @@ function flightBox() {
   return `<section class="card"><b>שעת הטיסה חזרה (LY2366)</b><div class="row"><input type="time" data-act="flight" value="${esc(v)}"></div>${calc}</section>`;
 }
 const NOPIC = /^(d\d-(land|car|arrive|back|fuel|return|out|bf|drive|eve|lunch|dinner|free|fly|checkin-air))$/;
-const galOk = i => !NOPIC.test(i.id) && (i.wiki?.length || i.maps);
 const deepHtml = dp => dp && dp.length ? `<details class="deep"><summary>📖 העמק — הסיפור המלא</summary>${dp.map(s => `<h5>${esc(s.t)}</h5>` + s.p.map(p => `<p>${esc(p)}</p>`).join('')).join('')}<p class="tiny muted">מבוסס על חיפוש במקורות פתוחים (Wikipedia, אתרי תיירות ומוזיאונים). איפה שהמקורות חלוקים — כתוב.</p></details>` : '';
 const loreHtml = (x, withTitle) => {
   const L = x.lore; if (!L) return '';
@@ -212,7 +210,7 @@ function itemHtml(i, next) {
       ${i.sentNote ? `<div class="hrs hrs-ok">🎟️<span>${esc(i.sentNote)}</span></div>` : ''}
       ${loreHtml(i)}
       ${i.hours ? `<div class="hrs hrs-${i.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[i.hl || 'unk']}:</b> ${esc(i.hours)}</div>` : ''}
-      ${galOk(i) ? `<div class="gal" data-gal></div><div class="tiny muted">תמונות מ-Wikipedia/Wikimedia לפי חיפוש — להמחשה בלבד · <a target="_blank" rel="noopener" href="${waUrl((i.maps || i.title) + ' Hungary')}">🔎 עוד בגוגל</a></div>` : ''}
+      ${ownItemGal(i)}
       ${i.book ? rtimeHtml(i) + linksHtml(i, i.bookLabel || i.title) : ''}
       <div class="actions">${i.maps ? `<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(i.maps)}">🗺️ מפה</a><a class="btn" target="_blank" rel="noopener" href="${'https://www.google.com/maps/dir/?api=1&hl=en&destination=' + encodeURIComponent(i.maps)}">🧭 נווט</a>` : ''}${i.book ? statusBtn(i) : ''}</div>
       ${vettable(i) ? vetBar(i) : ''}${vetoed(i) ? `<p class="warn">🚫 נפסל ע״י ${esc(vetoBy(i))} — אפשר לדלג או להחליף במשהו אחר.</p>` : ''}
@@ -226,10 +224,9 @@ function restHtml(r) {
     ${r.sentNote ? `<div class="hrs hrs-warn">✉️<span>${esc(r.sentNote)}</span></div>` : ''}
     ${loreHtml(r)}
     ${r.hours ? `<div class="hrs hrs-${r.hl || 'unk'}">🕒 <b>${{ ok: 'שעות — אומת', warn: 'שעות — לאמת', unk: 'שעות — לא נמצא' }[r.hl || 'unk']}:</b> ${esc(r.hours)}</div>` : ''}
-    <div class="gal" data-rgal="${esc(r.id)}" hidden></div>
     ${r.book ? rtimeHtml(r) : ''}
     ${r.book ? linksHtml(r) : (r.info || r.phone || r.site ? linksHtml(r) : '')}
-    <div class="actions">${r.slot && !vetoed(r) ? `<button class="btn ${picked ? 'pri' : ''}" data-act="pick" data-slot="${esc(r.slot)}" data-id="${esc(r.id)}">${picked ? '✅ נבחרה' : 'בחרו במסעדה הזו'}</button>` : ''}<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(r.maps || r.name)}">🗺️ מפה</a><button class="btn" data-act="rphotos" data-id="${esc(r.id)}" data-q="${esc(r.name + ' ' + (r.maps || ''))}">📷 תמונות</button><a class="btn" target="_blank" rel="noopener" href="${waUrl(r.name + ' Hungary')}">🔎 גוגל</a>${r.book ? `<button class="btn" data-act="copymail" data-id="${esc(r.id)}">✉️ הודעת הזמנה</button>` : ''}${r.custom ? `<button class="btn del" data-act="delrest" data-id="${esc(r.id)}">מחק</button>` : ''}</div>
+    <div class="actions">${r.slot && !vetoed(r) ? `<button class="btn ${picked ? 'pri' : ''}" data-act="pick" data-slot="${esc(r.slot)}" data-id="${esc(r.id)}">${picked ? '✅ נבחרה' : 'בחרו במסעדה הזו'}</button>` : ''}<a class="btn" target="_blank" rel="noopener" href="${mapsUrl(r.maps || r.name)}">🗺️ מפה</a>${r.book ? `<button class="btn" data-act="copymail" data-id="${esc(r.id)}">✉️ הודעת הזמנה</button>` : ''}${r.custom ? `<button class="btn del" data-act="delrest" data-id="${esc(r.id)}">מחק</button>` : ''}</div>
     ${vetBar(r)}${vetoed(r) ? `<div class="tiny">🚫 נפסל ע״י ${esc(vetoBy(r))} — בחרו אחת מהחלופות.</div>` : ''}${r.book && !vetoed(r) ? bookingForm(r) : ''}${r.suggested ? '<div class="tiny muted">הצעה של Claude — לאמת שעות פתיחה בנובמבר</div>' : ''}</div>`;
 }
 
@@ -289,70 +286,28 @@ function viewMore() {
   return h;
 }
 
-// ---------- gallery via Wikipedia ----------
-const wcache = {};
-async function wikiImgs(title) {
-  if (wcache[title]) return wcache[title];
-  const ck = 'wk:' + title;
-  try { const c = localStorage.getItem(ck); if (c) return (wcache[title] = JSON.parse(c)); } catch { }
-  const out = [];
-  try {
-    const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/media-list/' + encodeURIComponent(title));
-    if (r.ok) {
-      const j = await r.json();
-      for (const m of j.items || []) {
-        if (m.type !== 'image') continue;
-        const set = m.srcset?.[m.srcset.length - 1] || m.srcset?.[0];
-        if (!set) continue;
-        let u = set.src; if (u.startsWith('//')) u = 'https:' + u;
-        if (/\.svg|icon|logo|flag|map/i.test(u)) continue;
-        out.push({ u, c: m.caption?.text || '', page: 'https://en.wikipedia.org/wiki/' + title });
-        if (out.length >= 6) break;
-      }
-    }
-  } catch { }
-  if (out.length) { wcache[title] = out; try { localStorage.setItem(ck, JSON.stringify(out)); } catch { } }
-  return out;
+// ---------- our own photos (shared album) ----------
+const albumUrls = () => (window.TRIP_ALBUM && window.TRIP_ALBUM.urls) || [];
+function ownItemGal(i) {
+  const L = (window.TRIP_ITEM_PHOTOS || {})[i.id]; if (!L || !L.length) return '';
+  return `<div class="gal">${L.map((n, k) => `<img src="${phUrl(albumUrls()[n], 420)}" alt="" loading="lazy" onerror="this.remove()" data-act="itemimg" data-it="${i.id}" data-i="${k}">`).join('')}</div>`;
 }
-async function commonsImgs(q) {
-  const ck = 'cm:' + q;
-  try { const c = localStorage.getItem(ck); if (c) return JSON.parse(c); } catch { }
-  const out = [];
-  try {
-    const r = await fetch('https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=420&format=json&origin=*&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap'));
-    if (r.ok) {
-      const j = await r.json();
-      for (const p of Object.values(j.query?.pages || {})) { const ii = p.imageinfo?.[0]; if (ii?.thumburl) out.push({ u: ii.thumburl, c: (p.title || '').replace(/^File:/, ''), page: ii.descriptionurl }); if (out.length >= 6) break; }
-    }
-  } catch { }
-  if (out.length) { try { localStorage.setItem(ck, JSON.stringify(out)); } catch { } }
-  return out;
+function showItem(id, k) {
+  const L = (window.TRIP_ITEM_PHOTOS || {})[id]; if (!L) return; const n = L.length; k = (k + n) % n;
+  openViewer(`<div class="vbar"><b>${k + 1}/${n}</b><span><button class="btn" data-act="itemimg" data-it="${id}" data-i="${k + 1}">›</button><button class="btn" data-act="itemimg" data-it="${id}" data-i="${k - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${phUrl(albumUrls()[L[k]], 1200)}" alt=""></div>`);
 }
-async function fillGal(g, titles, q, gq) {
-  g.innerHTML = '<span class="muted tiny">טוען תמונות…</span>';
-  let imgs = (await Promise.all(titles.map(wikiImgs))).flat().slice(0, 8);
-  if (!imgs.length && q) imgs = await commonsImgs(q);
-  g.innerHTML = imgs.length ? imgs.map(m => `<a href="${esc(m.page)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(m.u)}" alt="${esc(m.c)}"></a>`).join('') + `<a class="btn more" target="_blank" rel="noopener" href="${waUrl(gq)}">עוד ›</a>` : `<a class="btn" target="_blank" rel="noopener" href="${waUrl(gq)}">📷 לא נמצאו תמונות כאן — חיפוש בגוגל</a>`;
+const vidLink = v => { const A = window.TRIP_ALBUM; return `https://photos.google.com/share/${A.share}/photo/${v.id}?key=${A.key}`; };
+function ownVideos(d) {
+  const A = window.TRIP_ALBUM; if (!A || !A.videos) return ''; const V = A.videos.filter(v => v.d === d.id); if (!V.length) return '';
+  return `<div class="vids">${V.map((v, k) => `<a class="btn" target="_blank" rel="noopener" href="${vidLink(v)}">🎬 סרטון ${k + 1} · ${v.s} שנ׳</a>`).join('')}</div>`;
 }
 function ownGal(d) {
   const P = (window.TRIP_PHOTOS || {})[d.id]; if (!P || !P.items || !P.items.length) return '';
-  return `<section class="own"><h3>📸 התמונות שלנו</h3><div class="gal">${P.items.map((p, i) => `<img src="${phUrl(p.f, 500)}" alt="${esc(p.c)}" loading="lazy" onerror="this.remove()" data-act="ownimg" data-d="${d.id}" data-i="${i}">`).join('')}</div></section>`;
+  return `<section class="own"><h3>📸 התמונות שלנו</h3>${ownVideos(d)}<div class="gal">${P.items.map((p, i) => `<img src="${phUrl(p.f, 500)}" alt="${esc(p.c)}" loading="lazy" onerror="this.remove()" data-act="ownimg" data-d="${d.id}" data-i="${i}">`).join('')}</div></section>`;
 }
 function showOwn(d, i) {
   const P = (window.TRIP_PHOTOS || {})[d]; if (!P) return; const n = P.items.length; i = (i + n) % n; const p = P.items[i];
   openViewer(`<div class="vbar"><b>${esc(p.c)} · ${i + 1}/${n}</b><span><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i + 1}">›</button><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${phUrl(p.f, 1200)}" alt="${esc(p.c)}">${p.t ? `<p class="vcap">${esc(p.t)}</p>` : ''}</div>`);
-}
-function wireGallery() {
-  document.querySelectorAll('details.item').forEach(el => {
-    el.addEventListener('toggle', () => {
-      if (!el.open || el.dataset.loaded) return;
-      el.dataset.loaded = 1;
-      const g = el.querySelector('[data-gal]'); if (!g) return;
-      const titles = (el.dataset.wiki || '').split('|').filter(Boolean), q = el.dataset.q, tt = el.querySelector('summary .tt').textContent;
-      fillGal(g, titles, q ? q.replace(/ (Eger|Budapest)$/i, '') + ' Hungary' : '', (q || tt) + ' Hungary');
-    });
-    if (el.open) el.dispatchEvent(new Event('toggle'));
-  });
 }
 
 
@@ -541,33 +496,14 @@ function iconify(root) {
 new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1 || n.nodeType === 3) iconify(n); }))).observe(document.body, { childList: true, subtree: true });
 
 // ---------- hero photo (Wikipedia lead image, with gradient fallback) ----------
-async function heroImg(title) {
-  const ck = 'hero2:' + title;
-  try { const c = localStorage.getItem(ck); if (c) return c; } catch { }
-  try {
-    const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title));
-    if (!r.ok) return '';
-    const j = await r.json(), o = j.originalimage, t = j.thumbnail;
-    let u = '';
-    if (o && o.width && o.width <= 1400) u = o.source;           // small enough to use as is
-    else if (t && /\/\d+px-/.test(t.source)) u = t.source.replace(/\/\d+px-/, '/960px-'); // standard Wikimedia thumb size
-    else u = (o && o.source) || (t && t.source) || '';
-    if (u) { try { localStorage.setItem(ck, u); } catch { } }
-    return u;
-  } catch { return ''; }
-}
 const tryImg = u => new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u; });
 const phUrl = (u, w) => /googleusercontent\.com/.test(u) ? `${u}=w${w}` : u;
 async function loadHero() {
   const el = document.querySelector('.hero[data-hero]'); if (!el) return;
   const mine = (window.TRIP_PHOTOS || {})[el.dataset.day];
-  if (mine && mine.hero) { const u = phUrl(mine.hero, 1000); if (await tryImg(u)) { if (document.body.contains(el)) { el.style.backgroundImage = `url("${u}")`; el.style.backgroundPosition = mine.pos || 'center'; } return; } }
-  if (!el.dataset.hero) return;
-  for (const title of el.dataset.hero.split('|')) {
-    const u = await heroImg(title);
-    if (u && await tryImg(u)) { if (document.body.contains(el)) el.style.backgroundImage = `url("${u}")`; return; }
-    try { localStorage.removeItem('hero2:' + title); } catch { }
-  }
+  if (!(mine && mine.hero)) return;   // only our own photos; no stock/Wikipedia images
+  const u = phUrl(mine.hero, 1000);
+  if (await tryImg(u) && document.body.contains(el)) { el.style.backgroundImage = `url("${u}")`; el.style.backgroundPosition = mine.pos || 'center'; }
 }
 
 
@@ -780,6 +716,7 @@ document.addEventListener('click', e => {
   else if (a === 'mapimg') { showMapImg(T.days.find(x => x.id === t.dataset.day), t.dataset.m); }
   else if (a === 'mapall') { t.disabled = true; saveAllMaps(t).then(() => { t.disabled = false; render(); }); }
   else if (a === 'ownimg') showOwn(t.dataset.d, +t.dataset.i);
+  else if (a === 'itemimg') showItem(t.dataset.it, +t.dataset.i);
   else if (a === 'vclose') { const v = $('#viewer'); if (v) v.hidden = true; if (S.tab === 'map') markSaved(focusDay()); }
   else if (a === 'vrefresh') { showMapImg(T.days.find(x => x.id === t.dataset.day), t.dataset.m, true); }
   else if (a === 'vshare') { const dd = T.days.find(x => x.id === t.dataset.day); idbGet(dd.id + '-' + t.dataset.m).then(r => { const f = new File([r.blob], `hungary-${dd.id}.png`, { type: 'image/png' }); if (navigator.canShare?.({ files: [f] })) navigator.share({ files: [f] }).catch(() => { }); else toast('השיתוף לא נתמך — השתמשו ב"שמור"'); }); }
@@ -789,7 +726,6 @@ document.addEventListener('click', e => {
   else if (a === 'copysum') { const msg = summaryText(t.dataset.l); (navigator.clipboard?.writeText(msg) || Promise.reject()).then(() => toast(t.dataset.l === 'en' ? 'Copied' : 'הועתק — אפשר להדביק בווטסאפ')).catch(() => prompt('העתיקו:', msg)); }
   else if (a === 'pick') { const s = t.dataset.slot; S.pick[s] = pickOf(s) === id ? '' : id; save(); keepOpen(); }
   else if (a === 'gotoday') { S.day = id; S.tab = 'day'; save(); render(); scrollTo(0, 0); }
-  else if (a === 'rphotos') { const g = document.querySelector(`[data-rgal="${CSS.escape(id)}"]`); if (g) { g.hidden = !g.hidden; if (!g.hidden && !g.dataset.l) { g.dataset.l = 1; fillGal(g, [], t.dataset.q, t.dataset.q + ' Hungary'); } } }
   else if (a === 'vote') { const v = (S.vote[id] ||= {}), w = t.dataset.who; v[w] = v[w] === t.dataset.v ? '' : t.dataset.v; save(); keepOpen(); }
   else if (a === 'names') { const n0 = prompt('שם ראשון (אתה):', S.names[0]), n1 = prompt('שם שני:', S.names[1]); if (n0) S.names[0] = n0; if (n1) S.names[1] = n1; save(); render(); }
   else if (a === 'delrest') { for (const k in S.customRest) S.customRest[k] = S.customRest[k].filter(r => r.id !== id); save(); render(); }
