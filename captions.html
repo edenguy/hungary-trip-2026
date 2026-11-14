@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>כיתובים לאלבום</title>
+<style>
+:root{--bg:#f5f3ef;--card:#fff;--ink:#1d1b19;--mut:#6b655e;--line:#e6e1d9;--acc:#8a2f3b}
+@media (prefers-color-scheme:dark){:root{--bg:#151413;--card:#201e1c;--ink:#f2eee8;--mut:#a39c92;--line:#332f2b;--acc:#e08a96}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,"Heebo",sans-serif;padding:0 16px 40px}
+header{position:sticky;top:0;background:var(--bg);padding:14px 0 10px;border-bottom:1px solid var(--line);z-index:2}
+h1{font-size:20px;margin:0 0 4px}p{margin:0;color:var(--mut);font-size:14px}
+.row{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;margin:10px 0}
+.row img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none;background:var(--line)}
+.t{color:var(--mut);font-size:12px;direction:ltr;text-align:right}
+.c{flex:1;min-width:0}.c b{display:block;font-weight:600}
+button{font:inherit;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--acc);border-radius:999px;padding:6px 12px;cursor:pointer;flex:none}
+button.done{color:var(--mut)}
+.top{display:flex;gap:8px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+<h1>כיתובים לאלבום Google Photos</h1>
+<p>לפי הסדר בו הצילומים באלבום, מהישן לחדש. לחצו "העתק" והדביקו ככיתוב בתמונה.</p>
+<div class="top"><button id="all">העתק את כל הרשימה</button></div>
+</header>
+<main id="list"></main>
+<script src="mapdata.js"></script>
+<script src="captions.js"></script>
+<script>
+const A = window.TRIP_ALBUM, C = window.TRIP_CAPTIONS, list = document.getElementById('list');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+list.innerHTML = A.urls.map((u, i) => `<div class="row"><img loading="lazy" alt="" src="${u}=w200-h200-c" onerror="this.style.visibility='hidden'"><div class="c"><div class="t">${i + 1} · ${A.times[i]}</div><b>${esc(C[i] || '')}</b></div><button data-i="${i}">העתק</button></div>`).join('');
+const copy = async (text, btn, label) => {
+  try { await navigator.clipboard.writeText(text); } catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
+  const o = btn.textContent; btn.textContent = 'הועתק ✓'; btn.classList.add('done'); setTimeout(() => { btn.textContent = label || o; }, 1200);
+};
+list.addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) copy(C[+b.dataset.i], b, 'העתק'); });
+document.getElementById('all').addEventListener('click', e => copy(C.map((c, i) => `${i + 1}. ${A.times[i]} — ${c}`).join('\n'), e.target, 'העתק את כל הרשימה'));
+</script>
+</body>
+</html>
