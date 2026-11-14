@@ -1,7 +1,7 @@
 (() => {
 const T = window.TRIP;
 const KEY = 'hu-trip-v1';
-const BUILD = '20261114161939';
+const BUILD = '20261114164855';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsUrl = q => 'https://www.google.com/maps/search/?api=1&hl=en&query=' + encodeURIComponent(q);
@@ -340,7 +340,7 @@ function ownGal(d) {
 }
 function showOwn(d, i) {
   const P = (window.TRIP_PHOTOS || {})[d]; if (!P) return; const n = P.items.length; i = (i + n) % n; const p = P.items[i];
-  openViewer(`<div class="vbar"><b>${esc(p.c)} · ${i + 1}/${n}</b><span><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i + 1}">›</button><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${phUrl(p.f, 1200)}" alt="${esc(p.c)}"></div>`);
+  openViewer(`<div class="vbar"><b>${esc(p.c)} · ${i + 1}/${n}</b><span><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i + 1}">›</button><button class="btn" data-act="ownimg" data-d="${d}" data-i="${i - 1}">‹</button><button class="btn" data-act="vclose">✕</button></span></div><div class="vimg"><img src="${phUrl(p.f, 1200)}" alt="${esc(p.c)}">${p.t ? `<p class="vcap">${esc(p.t)}</p>` : ''}</div>`);
 }
 function wireGallery() {
   document.querySelectorAll('details.item').forEach(el => {
