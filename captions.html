@@ -11,7 +11,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,"Heebo",sans-serif;padding:0 16px 40px}
 header{position:sticky;top:0;background:var(--bg);padding:14px 0 10px;border-bottom:1px solid var(--line);z-index:2}
 h1{font-size:20px;margin:0 0 4px}p{margin:0;color:var(--mut);font-size:14px}
-.row{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;margin:10px 0}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin:12px 0}.imgs{display:flex;gap:6px;margin-bottom:8px}.imgs img{width:calc(33.3% - 4px);aspect-ratio:1;object-fit:cover;border-radius:12px;background:var(--line)}.grp h2{font-size:17px;margin:2px 0 4px}.grp p{color:var(--ink);font-size:15px;margin:0 0 10px}.grp button{width:100%}
 .row img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none;background:var(--line)}
 .t{color:var(--mut);font-size:12px;direction:ltr;text-align:right}
 .c{flex:1;min-width:0}.c b{display:block;font-weight:600}
@@ -23,22 +23,26 @@ button.done{color:var(--mut)}
 <body>
 <header>
 <h1>כיתובים לאלבום Google Photos</h1>
-<p>לפי הסדר בו הצילומים באלבום, מהישן לחדש. לחצו "העתק" והדביקו ככיתוב בתמונה.</p>
-<div class="top"><button id="all">העתק את כל הרשימה</button></div>
+<p>כיתוב אחד לכל נושא, עם עובדה על המקום. מספרי התמונות לפי הסדר באלבום (מהישן לחדש). הדביקו את הכיתוב בתמונה הראשונה של הנושא, או בכל התמונות.</p>
+<div class="top"><button id="all">העתק הכל</button></div>
 </header>
 <main id="list"></main>
 <script src="mapdata.js"></script>
 <script src="captions.js"></script>
 <script>
-const A = window.TRIP_ALBUM, C = window.TRIP_CAPTIONS, list = document.getElementById('list');
+const A = window.TRIP_ALBUM, G = window.TRIP_CAPTION_GROUPS, list = document.getElementById('list');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-list.innerHTML = A.urls.map((u, i) => `<div class="row"><img loading="lazy" alt="" src="${u}=w200-h200-c" onerror="this.style.visibility='hidden'"><div class="c"><div class="t">${i + 1} · ${A.times[i]}</div><b>${esc(C[i] || '')}</b></div><button data-i="${i}">העתק</button></div>`).join('');
+const rng = r => r.map(([a, b]) => a === b ? `${a + 1}` : `${a + 1}–${b + 1}`).join(', ');
+list.innerHTML = G.map((g, k) => {
+  const first = g.r[0][0], idxs = [first, Math.min(first + 1, g.r[0][1]), g.r[0][1]].filter((v, i, a) => a.indexOf(v) === i);
+  return `<div class="grp"><div class="imgs">${idxs.map(i => `<img loading="lazy" alt="" src="${A.urls[i]}=w200-h200-c" onerror="this.style.visibility='hidden'">`).join('')}</div><div class="c"><div class="t">תמונות ${rng(g.r)} · ${A.times[first]}</div><h2>${esc(g.n)}</h2><p>${esc(g.t)}</p></div><button data-k="${k}">העתק</button></div>`;
+}).join('');
 const copy = async (text, btn, label) => {
   try { await navigator.clipboard.writeText(text); } catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
-  const o = btn.textContent; btn.textContent = 'הועתק ✓'; btn.classList.add('done'); setTimeout(() => { btn.textContent = label || o; }, 1200);
+  btn.textContent = 'הועתק ✓'; setTimeout(() => { btn.textContent = label; }, 1200);
 };
-list.addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) copy(C[+b.dataset.i], b, 'העתק'); });
-document.getElementById('all').addEventListener('click', e => copy(C.map((c, i) => `${i + 1}. ${A.times[i]} — ${c}`).join('\n'), e.target, 'העתק את כל הרשימה'));
+list.addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (b) copy(G[+b.dataset.k].t, b, 'העתק'); });
+document.getElementById('all').addEventListener('click', e => copy(G.map(g => `${g.n} (תמונות ${rng(g.r)})\n${g.t}`).join('\n\n'), e.target, 'העתק הכל'));
 </script>
 </body>
 </html>
